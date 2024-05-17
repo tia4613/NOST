@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.naver",
     "dj_rest_auth.registration",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
@@ -124,6 +125,16 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_ADAPTER = "accounts.adapters.CustomUserAccountAdapter"
+
+SOCIALACCOUNT_PROVIDERS = {
+    "naver": {
+        "APP": {
+            "client_id": os.getenv("NAVER_CLIENT_ID"),
+            "secret": os.getenv("NAVER_SECRET_KEY"),
+            "key": "",
+        }
+    }
+}
 
 
 # rest framework

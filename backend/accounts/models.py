@@ -10,7 +10,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=255,
         unique=True,
     )
-    nickname = models.CharField(max_length=30, unique=True)
+    nickname = models.CharField(max_length=30)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

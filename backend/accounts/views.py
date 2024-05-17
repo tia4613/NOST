@@ -1,5 +1,7 @@
 from django.shortcuts import render
+from allauth.socialaccount.providers.naver.views import NaverOAuth2Adapter
 from dj_rest_auth.views import UserDetailsView
+from dj_rest_auth.registration.views import SocialLoginView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -26,5 +28,7 @@ User = get_user_model()
 
 #         user.delete()
 #         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    
+
+
+class NaverLogin(SocialLoginView):
+    adapter_class = NaverOAuth2Adapter
