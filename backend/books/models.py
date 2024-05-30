@@ -69,5 +69,5 @@ class Chapter(models.Model):
             if last_index:
                 self.chapter_num = last_index.chapter_num + 1
             else:
-                self.chapter_num = 1
+                self.chapter_num = 0
         super(Chapter, self).save(*args, **kwargs)

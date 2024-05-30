@@ -134,19 +134,40 @@ def synopsis_generator(user_prompt):
 
 
 
-def summary_generator(summary):
-    llm=ChatOpenAI(model='gpt-3.5-turbo', api_key=os.getenv('OPENAI_API_KEY'))
+def summary_generator(chapter_num, summary):
+    llm=ChatOpenAI(model='gpt-3.5-turbo', api_key=os.getenv('OPENAI_API_KEY'), temperature=1.2)
     
     memory=ConversationSummaryBufferMemory(llm=llm, max_token_limit=20000, memory_key='chat_history', return_messages=True)
     
+    stage=['writes Expositions that introduce the characters and setting of your novel and where events take place.',
+            'writes Development which a series of events leads to conflict between characters.',
+            'writes crises, where a reversal of events occurs, a new situation emerges, and the protagonist ultimately fails.',
+            'writes a climax in which a solution to a new situation is realized, the protagonist implements it, and the conflict shifts.',
+            'writes endings where the protagonist wraps up the case, all conflicts are resolved, and the story ends.']  # 발단, 전개, 위기, 절정, 결말
+    
+    current_stage=stage[chapter_num//2]
+    next_stage=stage[chapter_num//2+1]
+    
     summary_template = ChatPromptTemplate.from_messages([
-        ("system", "You are an experienced novelist. Write a concise, realistic, and engaging summary based on the provided theme and previous context. Develop the characters, setting, and plot with rich descriptions. Ensure the summary flows smoothly, highlighting both hope and despair. Make the narrative provocative and creative. Avoid explicit reader interaction prompts or suggested paths."),
+        ("system", """You are an experienced novelist who {current_stage}. 
+            Write a concise, realistic, and engaging summary based on the provided theme and previous context. 
+            Develop the characters, setting, and plot with rich descriptions. 
+            Ensure the summary flows smoothly, highlighting both hope and despair. 
+            Make the narrative provocative and creative. 
+            Avoid explicit reader interaction prompts or suggested paths."""),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{prompt}")
     ])
 
     recommend_template = ChatPromptTemplate.from_messages([
-        ("system", "Based on the current summary prompt, provide three compelling recommendations for the next part of the summary. Your recommendations should emphasize hopeful, tragically hopeless, and starkly realistic choices, respectively. Be extremely contextual and realistic with your recommendations. Each recommendation should have 'Title': 'Description'. For example: 'Title': 'The Beginning of a Tragedy','Description': 'The people are kind to the new doctor in town, but under the guise of healing their wounds, the doctor slowly conducts experiments.' The response format is exactly the same as the frames in the example."),
+        ("system", """
+            You are an experienced novelist who {current_stage}. 
+            Based on the current summary prompt, provide three compelling recommendations for the next part of the summary.
+            Your recommendations should highlight each of the starkly emotional and realistic choices: hope, tragedy, despair, depression, and enjoyment.
+            Be extremely contextual and realistic with your recommendations. 
+            Each recommendation should have 'Title': 'Description'. For example: 'Title': 'The Beginning of a Tragedy','Description': 'The people are kind to the new doctor in town, but under the guise of healing their wounds, the doctor slowly conducts experiments.' 
+            The response format is exactly the same as the frames in the example.
+            """),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{current_story}")
     ])

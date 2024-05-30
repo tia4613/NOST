@@ -4,7 +4,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .models import Book, Comment, Rating
+from .models import Book, Comment, Rating, Chapter
 from .serializers import (
     BookSerializer,
     BookLikeSerializer,
@@ -37,7 +37,10 @@ class BookListAPIView(ListAPIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(
-                data={'book_id':serializer.data['id'],"content": content},  # FE에 content 응답
+                data={
+                    "book_id": serializer.data["id"],
+                    "content": content,
+                },  # FE에 content 응답
                 status=status.HTTP_201_CREATED,
             )
 
@@ -49,7 +52,7 @@ class BookDetailAPIView(APIView):
         ratings = Rating.objects.filter(book=book)
         serializer = BookSerializer(book)
         return Response(serializer.data, status=200)
-    
+
     # chapter(summary) 생성
     def post(self, request, book_id):
         summary = request.data.get("summary")
@@ -57,21 +60,25 @@ class BookDetailAPIView(APIView):
             return Response(
                 {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
-        result = summary_generator(summary)
-        book=get_object_or_404(Book, id=book_id)
+        chapter = Chapter.objects.filter(book_id=book_id).last()
+        if not chapter:
+            return Response(
+                {"error": "Not exist Book"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        result = summary_generator(chapter.chapter_num, summary)
         serializer = ChapterSerializer(
-            data={"content": result["final_summary"], "book_id": book.pk}
+            data={"content": result["final_summary"], "book_id": chapter.book_id}
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            result['book_id']=book.pk
+            result["book_id"] = chapter.book_id
             return Response(data=result, status=status.HTTP_201_CREATED)
 
     # 글 수정
     def put(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         serializer = BookSerializer(book, data=request.data, partial=True)
-        
+
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=201)
@@ -107,27 +114,27 @@ class BookLikeAPIView(APIView):
             status=200,
         )
 
-class RatingAPIView(APIView) :
+
+class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self,request,book_id) :
-        book = get_object_or_404(Book, id = book_id)
+    def post(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
         rating = request.data.get("rating")
 
-        if rating not in [1,2,3,4,5] :
+        if rating not in [1, 2, 3, 4, 5]:
             return Response("Rating must be between 1 and 5", status=400)
 
-        existing_rating = Rating.objects.filter(book=book,user_id=request.user).first()
-        if existing_rating :
+        existing_rating = Rating.objects.filter(book=book, user_id=request.user).first()
+        if existing_rating:
             return Response("You have already rated this book.", status=400)
         # if request.user in rating.user_id :
         #     return Response("Already Exist", status=400)
-        serializer = RatingSerializer(data = {"rating" : rating})
-        if serializer.is_valid(raise_exception=True) :
-            serializer.save(user_id = request.user, book=book)
+        serializer = RatingSerializer(data={"rating": rating})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(user_id=request.user, book=book)
             return Response(serializer.data, status=200)
         return Response(status=400)
-
 
 
 class CommentListAPIView(APIView):
