@@ -1,10 +1,9 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .models import Book, Comment, Rating
+from .models import Book, Comment, Rating, Chapter
 from .serializers import (
     BookSerializer,
     BookLikeSerializer,
@@ -14,15 +13,16 @@ from .serializers import (
 )
 from django.core import serializers
 from .generators import synopsis_generator, summary_generator
+from .deepL_translation import translate_summary
 
 
-class BookListAPIView(ListAPIView):
+class BookListAPIView(APIView):
     # 전체 목록 조회
     def get(self, request) :
         books = Book.objects.order_by('-created_at')
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data)
-        
+
     # 새 소설 책 생성
     def post(self, request):
         user_prompt = request.data.get("prompt")
@@ -85,6 +85,13 @@ class BookDetailAPIView(APIView):
         book.delete()
         return Response("No Content", status=204)
 
+class TranslateAPIView(APIView) :
+    def post(self, request, book_id) :
+        chapter = get_object_or_404(Chapter, book_id = book_id)
+        language = request.data.get("language","EN")
+        summary = chapter.content
+        translated_summary= translate_summary(summary,language)
+        return Response({"translated_summary" : translated_summary})        
 
 class BookLikeAPIView(APIView):
     permission_classes = [IsAuthenticated]

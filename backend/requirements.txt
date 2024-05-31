@@ -7,12 +7,15 @@ asttokens==2.4.1
 attrs==23.2.0
 certifi==2024.2.2
 charset-normalizer==3.3.2
+colorama==0.4.6
 comm==0.2.2
 dataclasses-json==0.6.6
 debugpy==1.8.1
 decorator==5.1.1
+deepl==1.18.0
+deepl.py==1.0.3
 distro==1.9.0
-git+https://github.com/Juunsik/dj-rest-auth.git@4fd3f5f0cb9eb336ba4a209f5c5ce6936c320068
+dj-rest-auth @ git+https://github.com/Juunsik/dj-rest-auth.git@4fd3f5f0cb9eb336ba4a209f5c5ce6936c320068
 Django==4.2
 django-allauth==0.62.1
 django-cors-headers==4.3.1
@@ -63,6 +66,7 @@ pydantic_core==2.18.2
 Pygments==2.18.0
 PyJWT==2.8.0
 python-dateutil==2.9.0.post0
+pywin32==306
 PyYAML==6.0.1
 pyzmq==26.0.3
 referencing==0.35.1
