@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -17,10 +16,12 @@ from .generators import synopsis_generator, summary_generator
 from .deepL_translation import translate_summary
 
 
-class BookListAPIView(ListAPIView):
+class BookListAPIView(APIView):
     # 전체 목록 조회
-    queryset = Book.objects.all().order_by("-created_at")
-    serializer_class = BookSerializer
+    def get(self, request) :
+        books = Book.objects.order_by('-created_at')
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
 
     # 새 소설 책 생성
     def post(self, request):
