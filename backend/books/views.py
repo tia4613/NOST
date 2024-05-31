@@ -4,7 +4,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .models import Book, Comment, Rating
+from .models import Book, Comment, Rating, Chapter
 from .serializers import (
     BookSerializer,
     BookLikeSerializer,
@@ -83,6 +83,7 @@ class BookDetailAPIView(APIView):
         book = get_object_or_404(Book, id=book_id)
         book.delete()
         return Response("No Content", status=204)
+
 
 
 class BookLikeAPIView(APIView):
