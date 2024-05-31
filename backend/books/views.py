@@ -14,6 +14,7 @@ from .serializers import (
 )
 from django.core import serializers
 from .generators import synopsis_generator, summary_generator
+from .deepL_translation import translate_summary
 
 
 class BookListAPIView(ListAPIView):
@@ -84,7 +85,13 @@ class BookDetailAPIView(APIView):
         book.delete()
         return Response("No Content", status=204)
 
-
+class TranslateAPIView(APIView) :
+    def post(self, request, book_id) :
+        chapter = get_object_or_404(Chapter, book_id = book_id)
+        language = request.data.get("language","EN")
+        summary = chapter.content
+        translated_summary= translate_summary(summary,language)
+        return Response({"translated_summary" : translated_summary})        
 
 class BookLikeAPIView(APIView):
     permission_classes = [IsAuthenticated]
