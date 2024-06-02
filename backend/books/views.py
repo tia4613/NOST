@@ -62,16 +62,16 @@ class BookDetailAPIView(APIView):
             )
         chapter = Chapter.objects.filter(book_id=book_id).last()
         if not chapter:
-            return Response(
-                {"error": "Not exist Book"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        result = summary_generator(chapter.chapter_num, summary)
+            chapter_num=0
+        else:
+            chapter_num=chapter.chapter_num
+        result = summary_generator(chapter_num, summary)
         serializer = ChapterSerializer(
-            data={"content": result["final_summary"], "book_id": chapter.book_id}
+            data={"content": result["final_summary"], "book_id": book_id}
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            result["book_id"] = chapter.book_id
+            result["book_id"] = book_id
             return Response(data=result, status=status.HTTP_201_CREATED)
 
     # 글 수정

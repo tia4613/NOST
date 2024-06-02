@@ -145,6 +145,7 @@ def summary_generator(chapter_num, summary):
             'writes a climax in which a solution to a new situation is realized, the protagonist implements it, and the conflict shifts.',
             'writes endings where the protagonist wraps up the case, all conflicts are resolved, and the story ends.']  # 발단, 전개, 위기, 절정, 결말
     
+    
     current_stage=stage[chapter_num//2]
     next_stage=stage[chapter_num//2+1]
     
@@ -161,7 +162,7 @@ def summary_generator(chapter_num, summary):
 
     recommend_template = ChatPromptTemplate.from_messages([
         ("system", """
-            You are an experienced novelist who {current_stage}. 
+            You are an experienced novelist who {next_stage}. 
             Based on the current summary prompt, provide three compelling recommendations for the next part of the summary.
             Your recommendations should highlight each of the starkly emotional and realistic choices: hope, tragedy, despair, depression, and enjoyment.
             Be extremely contextual and realistic with your recommendations. 
@@ -200,9 +201,9 @@ def summary_generator(chapter_num, summary):
 
         return recommendations
     
-    def generate_recommendations(chat_history, current_story):
+    def generate_recommendations(chat_history, current_story, next_stage):
         formatted_recommendation_prompt = recommend_template.format(
-            chat_history=chat_history, current_story=current_story)
+            chat_history=chat_history, current_story=current_story, next_stage=next_stage)
         recommendation_result = llm.invoke(formatted_recommendation_prompt)
         recommendations = parse_recommendations(recommendation_result.content)
         return recommendations
@@ -220,12 +221,12 @@ def summary_generator(chapter_num, summary):
     Write a concise, realistic, and engaging summary based on the above information. Highlight both hope and despair in the narrative. Make it provocative and creative.
     """
 
-    formatted_final_prompt = summary_template.format(chat_history=chat_history, prompt=prompt)
+    formatted_final_prompt = summary_template.format(chat_history=chat_history, prompt=prompt, current_stage=current_stage)
     result = llm.invoke(formatted_final_prompt)
     memory.save_context({"input": prompt}, {"output": result.content})
 
     cleaned_story = remove_recommendation_paths(result.content)
-    recommendations = generate_recommendations(chat_history, result.content)
+    recommendations = generate_recommendations(chat_history, result.content, next_stage)
 
     return {"final_summary": cleaned_story, "recommendations": recommendations}
 
