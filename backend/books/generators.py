@@ -4,195 +4,255 @@ import re
 import json
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
+from langchain.prompts import (
+    ChatPromptTemplate,
+    MessagesPlaceholder,
+    FewShotChatMessagePromptTemplate,
+)
 from langchain.schema.runnable import RunnablePassthrough
 
 
-
-def synopsis_generator(user_prompt):
+def elements_generator(user_prompt):
     llm = ChatOpenAI(
         model="gpt-3.5-turbo",
         api_key=os.getenv("OPENAI_API_KEY"),
         max_tokens=800,
-        temperature=1.2
+        temperature=1.2,
     )
 
-    example_prompt = (
-        'Title: The Wounded Ones\n'
-        'Genre: Romantic Thriller\n'
-        'Theme: Love and Discrimination\n'
-        'Tone: Tense and Emotional\n'
-        'Setting: 2156, Neo New York\n'
-        'Summary:\n'
-        'In 2156, Neo New York is a society deeply divided by discrimination between humans and synthetic humans. '
-        'Those with less than "60%" human DNA are legally not considered people and occupy the lowest rungs of society. '
-        'While the first generations of synthetic humans were known for their exceptional abilities and appearance, '
-        'subsequent generations became more biologically diverse, making them appear less human and more subject to discrimination.\n\n'
-        'Characters:\n'
-        'Eleanor Blackwood: An advocate for synthetic human rights. After her husband died in an accident, she has struggled to raise her two daughters.Eleanor is longtime friends with Frank Miller, and their friendship slowly blossoms into romance.'
-        'Lydia Blackwood: Eleanor\'s eldest daughter, a 17-year-old with "94%" human DNA. She faces less discrimination but still experiences social isolation because of her family.\n'
-        'Chloe Blackwood: Eleanor\'s younger daughter, a 12-year-old with "62%" human DNA. She faces severe bullying and discrimination at school and often gets into fights to defend herself.\n'
-        'Frank Miller: A seasoned detective and journalist. He is dedicated to exposing the discrimination against synthetic humans and protecting Eleanor and her daughters. '
-        'His efforts to uncover the truth also lead to a deepening relationship with Eleanor.'
-    )
+    examples = [
+        {
+            "user_prompt": "",  # 예시 넣어야 함
+            "answer": """
+                Title: The Wounded Ones
+                Genre: Romantic Thriller
+                Theme: Love and Discrimination
+                Tone: Tense and Emotional
+                Setting: Neo New York, 2156
+                Characters:
+                Eleanor Blackwood: A synthetic human rights advocate. Struggling to raise her two daughters after her husband was killed in an accident, Eleanor is an old friend of Frank Miller.
+                Lydia Blackwood: Eleanor's oldest daughter, 17-year-old Lydia, has '94%' human DNA.
+                Chloe Blackwood: Eleanor's youngest daughter, 12-year-old Chloe has '62%' human DNA. 
+                Frank Miller: A seasoned detective and journalist who exposes discrimination against synthetic humans and advocates for their equality.
+            """,
+        },
+        {
+            "user_prompt": "",  # 예시 넣어야 함
+            "answer": """
+                Title: Project-elven001
+                Genre: Thriller, Science Fiction
+                Theme: Ethics of Genetic Engineering, Exploitation, and Redemption
+                Tone: Dark, Intense, and Realistic
+                Setting: Near-future, Global Conflict Zones, Secret Laboratory
+                Characters:
+                Dr Viktor Hallstrom: A once-respected geneticist who has descended into madness, believing that creating elves is the pinnacle of genetic science.
+                Lena: A 12-year-old war orphan with a strong spirit.
+                Max: A 10-year-old boy with a keen intellect and innate curiosity.
+                Sarah Collins: A top journalist who has assembled a team to produce a documentary about the dangers of war and the devastation of post-war areas.
+            """,
+        },
+    ]
 
-    example_prompt2 = (
-        'Title: Project-elven001\n'
-        'Genre: Thriller, Science Fiction\n'
-        'Theme: Ethics of Genetic Engineering, Exploitation, and Redemption\n'
-        'Tone: Dark, Intense, and Realistic\n'
-        'Setting: Near-future, Global Conflict Zones, Secret Laboratory\n'
-        'Summary:\n'
-        'In a world ravaged by wars and conflicts, thousands of children are left orphaned and abandoned.'
-        'Amidst this chaos, a brilliant but morally bankrupt geneticist, Dr. Viktor Halstrom, sees an opportunity for his radical experiments.'
-        'While the first generations of synthetic humans were known for their exceptional abilities and appearance, '
-        'Driven by a twisted obsession with mythical beings, he aims to create real-life elves through advanced genetic engineering.\n\n'
-        'Characters:\n'
-        'Dr. Viktor Halstrom: A once-respected geneticist who has descended into madness, believing that creating elves is the pinnacle of genetic science. He is charismatic yet deeply disturbed, viewing his subjects as mere tools for his experiments.'
-        'Lena: A 12-year-old war orphan with a resilient spirit. She becomes the unintentional leader of the children taken by Halstrom. She is determined to survive and protect the younger children.\n'
-        'Max: A 10-year-old boy with a keen intellect and a natural curiosity. He becomes Lena\'s closest ally, using his knowledge to help them understand Halstrom\'s plans.\n'
-        'Sarah Collins: A top-tier journalist who assembles a team to create a documentary on the dangers of war and the devastation of post-war areas. While exploring these regions, she discovers Halstrom\'s research facility and begins to investigate its ominous nature.\n'
-    )
-
-    prompt_text = (
-        f"You are an expert in fiction. Generate a detailed synopsis for a novel based on the following user prompt. "
-        f"Here is an example format:\n\n{example_prompt}\n\n"
-        f"Now create a synopsis for the following prompt in a similar format.\n\n"
-        f"Prompt: {user_prompt}\n"
-        f"Format the response as follows:\n"
-        f"Title: <Insert the title of the novel>\n"
-        f"Genre: <Specify the genre of the novel>\n"
-        f"Theme: <Identify the main theme of the novel>\n"
-        f"Tone: <Describe the tone of the novel>\n\n"
-        f"Setting: <Describe the setting of the novel>\n\n"
-        f"Summary: <Provide a brief summary of the novel>\n\n"
-        f"Characters:<Describe the characters of the novel>"
-    )
-
-    prompt = ChatPromptTemplate.from_messages(
+    example_prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", prompt_text),
-            ("assistant", "I'm an AI that generates the best synopsis. Feel free to tell me anything about your synopsis."),
-            ("human", user_prompt),
-            ("assistant", example_prompt2)
+            ("human", "{user_prompt}"),
+            ("ai", "{answer}"),
         ]
     )
 
-    chain = prompt | llm
-    result = chain.invoke({"user_prompt": user_prompt})
+    example_prompt = FewShotChatMessagePromptTemplate(
+        example_prompt=example_prompt,
+        examples=examples,
+    )
 
-    result_text = result.content.strip()
+    elements_prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """
+                You are an expert in fiction. Generate a detailed settings for a novel based on the following user input.
+                Now create a setting(Title, Genre, Theme, Tone, Setting, Characters) for your novel, as shown in the examples.
+                Character entries should only tell you about your character's personality and upbringing.
+                Just tell me the answer to the input. Don't give interactive answers.
+            """,
+            ),
+            (
+                "assistant",
+                "I'm an AI that generates the best fiction setting. Feel free to tell me anything about your fiction setting.",
+            ),
+            example_prompt,
+            ("human", "{user_prompt}"),
+        ]
+    )
+
+    elements_chain = elements_prompt | llm
+    elements = elements_chain.invoke(
+        {
+            "user_prompt": user_prompt,  # user_prompt
+        }
+    )
+
+    result_text = elements.content.strip()
     logging.debug(f"Synopsis Generator Response: {result_text}")
 
     try:
-        result_lines = result_text.split('\n')
+        result_lines = result_text.split("\n")
         data = {
             "title": "",
             "genre": "",
             "theme": "",
             "tone": "",
             "setting": "",
-            "synopsis": "",
-            "characters": ""
+            "characters": "",
         }
         current_key = None
         for line in result_lines:
             line = line.strip()
             if line.startswith("Title:"):
                 data["title"] = line.split("Title:", 1)[1].strip()
-                current_key = "title"
+                current_key = "Title"
             elif line.startswith("Genre:"):
                 data["genre"] = line.split("Genre:", 1)[1].strip()
-                current_key = "genre"
+                current_key = "Genre"
             elif line.startswith("Theme:"):
                 data["theme"] = line.split("Theme:", 1)[1].strip()
-                current_key = "theme"
+                current_key = "Theme"
             elif line.startswith("Tone:"):
                 data["tone"] = line.split("Tone:", 1)[1].strip()
-                current_key = "tone"
+                current_key = "Tone"
             elif line.startswith("Setting:"):
                 data["setting"] = line.split("Setting:", 1)[1].strip()
-                current_key = "setting"
-
-
+                current_key = "Setting"
             elif line.startswith("Characters:"):
                 data["characters"] = line.split("Characters:", 1)[1].strip()
-                current_key = "characters"
-            elif current_key == "characters":
+                current_key = "Characters"
+            elif current_key == "Characters":
                 data["characters"] += " " + line
-            elif line.startswith("Summary:"):
-                data["synopsis"] = line.split("Summary:", 1)[1].strip()
-                current_key = "synopsis"
-            elif current_key == "synopsis":
-                data["synopsis"] += " " + line
 
+            data["characters"] = data["characters"].strip()
 
         return data
     except Exception as e:
         logging.error(f"Error parsing synopsis response: {e}")
-        return {"title": "", "genre": "", "theme": "", "tone": "", "setting": "", "synopsis": "", "characters": ""}
+        return {
+            "title": "",
+            "genre": "",
+            "theme": "",
+            "tone": "",
+            "setting": "",
+            "characters": "",
+        }
 
+
+def prologue_generator(elements):
+
+    llm = ChatOpenAI(
+        model="gpt-3.5-turbo",
+        api_key=os.getenv("OPENAI_API_KEY"),
+        max_tokens=800,
+        temperature=1.2,
+    )
+
+    prologue_prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """
+                    You are an expert in fiction.
+                    You create only the prologue for your novel using the setting(Title, Genre, Theme, Tone, Setting, Characters) you've been given.
+                    Prologue is a monologue or dialog that serves to set the scene and set the tone before the main story begins.
+                    The novel is told from the point of view of one of the Characters.
+                    Just tell me the answer to the input. Don't give interactive answers.
+                    If there are no setting(Title, Genre, Theme, Tone, Setting, Characters) in the input, give a blank answer.
+                """,
+            ),
+            ("human", "{setting}"),
+        ]
+    )
+
+    prologue_chain = prologue_prompt | llm
+
+    prologue = prologue_chain.invoke({"setting": elements})
+
+    return {"prologue": prologue.content}
 
 
 def summary_generator(chapter_num, summary):
-    llm=ChatOpenAI(model='gpt-3.5-turbo', api_key=os.getenv('OPENAI_API_KEY'), temperature=1.2)
-    
-    memory=ConversationSummaryBufferMemory(llm=llm, max_token_limit=20000, memory_key='chat_history', return_messages=True)
-    
-    stage=['writes Expositions that introduce the characters and setting of your novel and where events take place.',
-            'writes Development which a series of events leads to conflict between characters.',
-            'writes crises, where a reversal of events occurs, a new situation emerges, and the protagonist ultimately fails.',
-            'writes a climax in which a solution to a new situation is realized, the protagonist implements it, and the conflict shifts.',
-            'writes endings where the protagonist wraps up the case, all conflicts are resolved, and the story ends.']  # 발단, 전개, 위기, 절정, 결말
-    
-    
-    current_stage=stage[chapter_num//2]
-    next_stage=stage[chapter_num//2+1]
-    
-    summary_template = ChatPromptTemplate.from_messages([
-        ("system", """You are an experienced novelist who {current_stage}. 
+    llm = ChatOpenAI(
+        model="gpt-3.5-turbo", api_key=os.getenv("OPENAI_API_KEY"), temperature=1.2
+    )
+
+    memory = ConversationSummaryBufferMemory(
+        llm=llm, max_token_limit=20000, memory_key="chat_history", return_messages=True
+    )
+
+    stage = [
+        "writes Expositions that introduce the characters and setting of your novel and where events take place.",
+        "writes Development which a series of events leads to conflict between characters.",
+        "writes crises, where a reversal of events occurs, a new situation emerges, and the protagonist ultimately fails.",
+        "writes a climax in which a solution to a new situation is realized, the protagonist implements it, and the conflict shifts.",
+        "writes endings where the protagonist wraps up the case, all conflicts are resolved, and the story ends.",
+    ]  # 발단, 전개, 위기, 절정, 결말
+
+    current_stage = stage[chapter_num // 2]
+    next_stage = stage[chapter_num // 2 + 1]
+
+    summary_template = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """You are an experienced novelist who {current_stage}. 
             Write a concise, realistic, and engaging summary based on the provided theme and previous context. 
             Develop the characters, setting, and plot with rich descriptions. 
             Ensure the summary flows smoothly, highlighting both hope and despair. 
             Make the narrative provocative and creative. 
-            Avoid explicit reader interaction prompts or suggested paths."""),
-        MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{prompt}")
-    ])
+            Avoid explicit reader interaction prompts or suggested paths.""",
+            ),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{prompt}"),
+        ]
+    )
 
-    recommend_template = ChatPromptTemplate.from_messages([
-        ("system", """
+    recommend_template = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """
             You are an experienced novelist who {next_stage}. 
             Based on the current summary prompt, provide three compelling recommendations for the next part of the summary.
             Your recommendations should highlight each of the starkly emotional and realistic choices: hope, tragedy, despair, depression, and enjoyment.
             Be extremely contextual and realistic with your recommendations. 
             Each recommendation should have 'Title': 'Description'. For example: 'Title': 'The Beginning of a Tragedy','Description': 'The people are kind to the new doctor in town, but under the guise of healing their wounds, the doctor slowly conducts experiments.' 
             The response format is exactly the same as the frames in the example.
-            """),
-        MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{current_story}")
-    ])
-    
+            """,
+            ),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{current_story}"),
+        ]
+    )
+
     def load_memory():
         return memory.load_memory_variables({})["chat_history"]
-    
+
     def parse_recommendations(recommendation_text):
         recommendations = []
         try:
-            rec_lines = recommendation_text.split('\n')
+            rec_lines = recommendation_text.split("\n")
             title, description = None, None
             for line in rec_lines:
                 if line.startswith("Title:"):
                     if title and description:
                         recommendations.append(
-                            {"Title": title, "Description": description})
+                            {"Title": title, "Description": description}
+                        )
                     title = line.split("Title:", 1)[1].strip()
                     description = None
                 elif line.startswith("Description:"):
                     description = line.split("Description:", 1)[1].strip()
                     if title and description:
                         recommendations.append(
-                            {"Title": title, "Description": description})
+                            {"Title": title, "Description": description}
+                        )
                         title, description = None, None
                 if len(recommendations) == 3:
                     break
@@ -200,19 +260,21 @@ def summary_generator(chapter_num, summary):
             logging.error(f"Error parsing recommendations: {e}")
 
         return recommendations
-    
+
     def generate_recommendations(chat_history, current_story, next_stage):
         formatted_recommendation_prompt = recommend_template.format(
-            chat_history=chat_history, current_story=current_story, next_stage=next_stage)
+            chat_history=chat_history,
+            current_story=current_story,
+            next_stage=next_stage,
+        )
         recommendation_result = llm.invoke(formatted_recommendation_prompt)
         recommendations = parse_recommendations(recommendation_result.content)
         return recommendations
 
     def remove_recommendation_paths(final_summary):
-        pattern = re.compile(r'Recommended summary paths:.*$', re.DOTALL)
-        cleaned_story = re.sub(pattern, '', final_summary).strip()
+        pattern = re.compile(r"Recommended summary paths:.*$", re.DOTALL)
+        cleaned_story = re.sub(pattern, "", final_summary).strip()
         return cleaned_story
-
 
     chat_history = load_memory()
     prompt = f"""
@@ -221,7 +283,9 @@ def summary_generator(chapter_num, summary):
     Write a concise, realistic, and engaging summary based on the above information. Highlight both hope and despair in the narrative. Make it provocative and creative.
     """
 
-    formatted_final_prompt = summary_template.format(chat_history=chat_history, prompt=prompt, current_stage=current_stage)
+    formatted_final_prompt = summary_template.format(
+        chat_history=chat_history, prompt=prompt, current_stage=current_stage
+    )
     result = llm.invoke(formatted_final_prompt)
     memory.save_context({"input": prompt}, {"output": result.content})
 
@@ -229,4 +293,3 @@ def summary_generator(chapter_num, summary):
     recommendations = generate_recommendations(chat_history, result.content, next_stage)
 
     return {"final_summary": cleaned_story, "recommendations": recommendations}
-

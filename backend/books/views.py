@@ -13,7 +13,7 @@ from .serializers import (
     ChapterSerializer,
 )
 from django.core import serializers
-from .generators import synopsis_generator, summary_generator
+from .generators import elements_generator, prologue_generator, summary_generator
 
 
 class BookListAPIView(ListAPIView):
@@ -29,11 +29,9 @@ class BookListAPIView(ListAPIView):
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        content = synopsis_generator(user_prompt)  # ai로 title, synopsis 생성
-        title = content["title"]
-        serializer = BookSerializer(
-            data={"title": title, "user_id": request.user.pk}
-        )  # db에 title, user_id 저장
+        content = elements_generator(user_prompt)  # ai로 elements 생성
+        content['user_id']=request.user.pk
+        serializer = BookSerializer(data=content)  # db에 title, user_id 저장
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(
@@ -62,10 +60,11 @@ class BookDetailAPIView(APIView):
             )
         chapter = Chapter.objects.filter(book_id=book_id).last()
         if not chapter:
-            chapter_num=0
+            chapter_num = 0
+            result = prologue_generator(request.data)
         else:
-            chapter_num=chapter.chapter_num
-        result = summary_generator(chapter_num, summary)
+            chapter_num = chapter.chapter_num
+            result = summary_generator(chapter_num, summary)
         serializer = ChapterSerializer(
             data={"content": result["final_summary"], "book_id": book_id}
         )
