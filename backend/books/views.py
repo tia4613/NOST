@@ -33,6 +33,7 @@ class BookListAPIView(APIView):
             )
 
         content = elements_generator(user_prompt)  # ai로 elements 생성
+        translate_content = translate_summary(content,language)
         content["user_id"] = request.user.pk
         serializer = BookSerializer(data=content)  # db에 title, user_id 저장
         if serializer.is_valid(raise_exception=True):
@@ -40,7 +41,7 @@ class BookListAPIView(APIView):
             return Response(
                 data={
                     "book_id": serializer.data["id"],
-                    "content": content,
+                    "content": translate_content,
                 },  # FE에 content 응답
                 status=status.HTTP_201_CREATED,
             )
