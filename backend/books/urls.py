@@ -11,4 +11,5 @@ urlpatterns = [
     ),
     path("<int:book_id>/like/", views.BookLikeAPIView.as_view()),
     path("<int:book_id>/translate/", views.TranslateAPIView.as_view()),
+    path("<int:book_id>/image/", views.DALL_EImageAPIView.as_view()),
 ]

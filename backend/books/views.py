@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404, render
+from openai import OpenAI
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -46,6 +47,20 @@ class BookListAPIView(APIView):
                 status=status.HTTP_201_CREATED,
             )
 
+class DALL_EImageAPIView(APIView) :
+    def get(self, request, book_id):
+        client = OpenAI()
+        book = get_object_or_404(Book,id=book_id)
+        response = client.images.generate(
+            model = "dall-e-3",
+            prompt = f"{book.title}, {book.tone}",
+            size = "1024x1024",
+            quality = "standard",
+            n=1,
+        )
+        image_url = response.data[0].url
+        return Response({"image_url" : image_url})
+        
 
 class BookDetailAPIView(APIView):
     # 상세 조회
@@ -97,7 +112,7 @@ class BookDetailAPIView(APIView):
 class TranslateAPIView(APIView):
     def post(self, request, book_id):
         chapter = get_object_or_404(Chapter, book_id=book_id)
-        language = request.data.get("language", "EN")
+        language = request.data.get("language", "EN-US")
         summary = chapter.content
         translated_summary = translate_summary(summary, language)
         return Response({"translated_summary": translated_summary})
