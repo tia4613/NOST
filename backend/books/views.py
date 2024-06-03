@@ -141,7 +141,13 @@ class BookLikeAPIView(APIView):
             status=200,
         )
 
-
+class UserLikedBooksAPIView(APIView) :
+    permission_classes = [IsAuthenticated]
+    def get(self, request) :
+        user = request.user
+        book_likes = user.book_likes.all() # 역참조를 이용해 사용자가 좋아요한 책 리스트를 가져옴
+        serializer = BookSerializer(book_likes,many=True)
+        return Response(serializer.data,status = 200)
 class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
