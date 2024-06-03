@@ -15,7 +15,7 @@ decorator==5.1.1
 deepl==1.18.0
 deepl.py==1.0.3
 distro==1.9.0
-dj-rest-auth @ git+https://github.com/Juunsik/dj-rest-auth.git@4fd3f5f0cb9eb336ba4a209f5c5ce6936c320068
+git+https://github.com/Juunsik/dj-rest-auth.git@4fd3f5f0cb9eb336ba4a209f5c5ce6936c320068
 Django==4.2
 django-allauth==0.62.1
 django-cors-headers==4.3.1
