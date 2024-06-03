@@ -27,7 +27,7 @@ class BookListAPIView(APIView):
     # 새 소설 책 생성
     def post(self, request):
         user_prompt = request.data.get("prompt")
-        language = request.data.get("language","EN")
+        language = request.data.get("language","EN-US")
         if not user_prompt:
             return Response(
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
