@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -14,12 +13,15 @@ from .serializers import (
 )
 from django.core import serializers
 from .generators import elements_generator, prologue_generator, summary_generator
+from .deepL_translation import translate_summary
 
 
-class BookListAPIView(ListAPIView):
+class BookListAPIView(APIView):
     # 전체 목록 조회
-    queryset = Book.objects.all().order_by("-created_at")
-    serializer_class = BookSerializer
+    def get(self, request):
+        books = Book.objects.order_by("-created_at")
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
 
     # 새 소설 책 생성
     def post(self, request):
@@ -30,7 +32,7 @@ class BookListAPIView(ListAPIView):
             )
 
         content = elements_generator(user_prompt)  # ai로 elements 생성
-        content['user_id']=request.user.pk
+        content["user_id"] = request.user.pk
         serializer = BookSerializer(data=content)  # db에 title, user_id 저장
         if serializer.is_valid(raise_exception=True):
             serializer.save()
@@ -88,6 +90,15 @@ class BookDetailAPIView(APIView):
         book = get_object_or_404(Book, id=book_id)
         book.delete()
         return Response("No Content", status=204)
+
+
+class TranslateAPIView(APIView):
+    def post(self, request, book_id):
+        chapter = get_object_or_404(Chapter, book_id=book_id)
+        language = request.data.get("language", "EN")
+        summary = chapter.content
+        translated_summary = translate_summary(summary, language)
+        return Response({"translated_summary": translated_summary})
 
 
 class BookLikeAPIView(APIView):
