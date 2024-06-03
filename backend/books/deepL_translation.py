@@ -8,4 +8,4 @@ def translate_summary(summary, language) :
     translator = deepl.Translator(auth_key)
 
     result = translator.translate_text(summary, target_lang=language)
-    return result.text
+    return result

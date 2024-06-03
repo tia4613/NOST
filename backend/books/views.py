@@ -26,12 +26,14 @@ class BookListAPIView(APIView):
     # 새 소설 책 생성
     def post(self, request):
         user_prompt = request.data.get("prompt")
+        language = request.data.get("language","EN")
         if not user_prompt:
             return Response(
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         content = synopsis_generator(user_prompt)  # ai로 title, synopsis 생성
+        translate_content = translate_summary(content,language)
         title = content["title"]
         serializer = BookSerializer(
             data={"title": title, "user_id": request.user.pk}
@@ -39,7 +41,7 @@ class BookListAPIView(APIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(
-                data={'book_id':serializer.data['id'],"content": content},  # FE에 content 응답
+                data={'book_id':serializer.data['id'],"content": translate_content},  # FE에 content 응답
                 status=status.HTTP_201_CREATED,
             )
 
@@ -98,10 +100,10 @@ class BookLikeAPIView(APIView):
 
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
+        like_bool = False
         # 좋아요 삭제
         if request.user in book.is_liked.all():
             book.is_liked.remove(request.user)
-            like_bool = False
         # 좋아요 추가
         else:
             book.is_liked.add(request.user)
@@ -126,7 +128,7 @@ class RatingAPIView(APIView) :
         if rating not in [1,2,3,4,5] :
             return Response("Rating must be between 1 and 5", status=400)
 
-        existing_rating = Rating.objects.filter(book=book,user_id=request.user).first()
+        existing_rating = Rating.objects.filter(book=book,user_id=request.user).exists()
         if existing_rating :
             return Response("You have already rated this book.", status=400)
         # if request.user in rating.user_id :
@@ -162,7 +164,7 @@ class CommentDetailAPIView(APIView):
             serializer.save()
             return Response(serializer.data)
 
-    def delete(self, request, comment_id):
+    def delete(self, request, book_id, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
         comment.delete()
         return Response("NO comment", status=204)
