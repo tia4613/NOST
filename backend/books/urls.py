@@ -10,5 +10,5 @@ urlpatterns = [
         "<int:book_id>/comments/<int:comment_id>/", views.CommentDetailAPIView.as_view()
     ),
     path("<int:book_id>/like/", views.BookLikeAPIView.as_view()),
-    path("<int:book_id>/translate/",views.TranslateAPIView.as_view()),
+    path("<int:book_id>/translate/", views.TranslateAPIView.as_view()),
 ]

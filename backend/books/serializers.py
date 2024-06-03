@@ -11,34 +11,38 @@ class BookSerializer(serializers.ModelSerializer):
         model = Book
         fields = "__all__"
 
-    def get_average_rating(self,book) :
-        return Rating.objects.filter(book=book).aggregate(Avg('rating'))['rating__avg']
-    def get_user_nickname(serlf,book) :
+    def get_average_rating(self, book):
+        return Rating.objects.filter(book=book).aggregate(Avg("rating"))["rating__avg"]
+
+    def get_user_nickname(serlf, book):
         return book.user_id.nickname
+
 
 class BookLikeSerializer(BookSerializer):
     total_likes = serializers.IntegerField(read_only=True)
 
-class RatingSerializer(serializers.ModelSerializer) :
-    class Meta :
+
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
         model = Rating
-        fields = '__all__'
+        fields = "__all__"
         read_only_fields = ("book", "user_id")
+
 
 class CommentSerializer(serializers.ModelSerializer):
     user_nickname = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields='__all__'
+        fields = "__all__"
         read_only_fields = ("book", "user_id")
 
         def to_representation(self, instance):
             ret = super().to_representation(instance)
             ret.pop("article")
             return ret
-        
-    def get_user_nickname(self,comment) :
+
+    def get_user_nickname(self, comment):
         return comment.user_id.nickname
 
 

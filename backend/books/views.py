@@ -12,14 +12,14 @@ from .serializers import (
     ChapterSerializer,
 )
 from django.core import serializers
-from .generators import synopsis_generator, summary_generator
+from .generators import elements_generator, prologue_generator, summary_generator
 from .deepL_translation import translate_summary
 
 
 class BookListAPIView(APIView):
     # 전체 목록 조회
-    def get(self, request) :
-        books = Book.objects.order_by('-created_at')
+    def get(self, request):
+        books = Book.objects.order_by("-created_at")
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data)
 
@@ -32,16 +32,16 @@ class BookListAPIView(APIView):
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        content = synopsis_generator(user_prompt)  # ai로 title, synopsis 생성
-        translate_content = translate_summary(content,language)
-        title = content["title"]
-        serializer = BookSerializer(
-            data={"title": title, "user_id": request.user.pk}
-        )  # db에 title, user_id 저장
+        content = elements_generator(user_prompt)  # ai로 elements 생성
+        content["user_id"] = request.user.pk
+        serializer = BookSerializer(data=content)  # db에 title, user_id 저장
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(
-                data={'book_id':serializer.data['id'],"content": translate_content},  # FE에 content 응답
+                data={
+                    "book_id": serializer.data["id"],
+                    "content": content,
+                },  # FE에 content 응답
                 status=status.HTTP_201_CREATED,
             )
 
@@ -53,7 +53,7 @@ class BookDetailAPIView(APIView):
         ratings = Rating.objects.filter(book=book)
         serializer = BookSerializer(book)
         return Response(serializer.data, status=200)
-    
+
     # chapter(summary) 생성
     def post(self, request, book_id):
         summary = request.data.get("summary")
@@ -61,21 +61,26 @@ class BookDetailAPIView(APIView):
             return Response(
                 {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
-        result = summary_generator(summary)
-        book=get_object_or_404(Book, id=book_id)
+        chapter = Chapter.objects.filter(book_id=book_id).last()
+        if not chapter:
+            chapter_num = 0
+            result = prologue_generator(request.data)
+        else:
+            chapter_num = chapter.chapter_num
+            result = summary_generator(chapter_num, summary)
         serializer = ChapterSerializer(
-            data={"content": result["final_summary"], "book_id": book.pk}
+            data={"content": result["final_summary"], "book_id": book_id}
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            result['book_id']=book.pk
+            result["book_id"] = book_id
             return Response(data=result, status=status.HTTP_201_CREATED)
 
     # 글 수정
     def put(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         serializer = BookSerializer(book, data=request.data, partial=True)
-        
+
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=201)
@@ -87,13 +92,15 @@ class BookDetailAPIView(APIView):
         book.delete()
         return Response("No Content", status=204)
 
-class TranslateAPIView(APIView) :
-    def post(self, request, book_id) :
-        chapter = get_object_or_404(Chapter, book_id = book_id)
-        language = request.data.get("language","EN")
+
+class TranslateAPIView(APIView):
+    def post(self, request, book_id):
+        chapter = get_object_or_404(Chapter, book_id=book_id)
+        language = request.data.get("language", "EN")
         summary = chapter.content
-        translated_summary= translate_summary(summary,language)
-        return Response({"translated_summary" : translated_summary})        
+        translated_summary = translate_summary(summary, language)
+        return Response({"translated_summary": translated_summary})
+
 
 class BookLikeAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -118,14 +125,15 @@ class BookLikeAPIView(APIView):
             status=200,
         )
 
-class RatingAPIView(APIView) :
+
+class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self,request,book_id) :
-        book = get_object_or_404(Book, id = book_id)
+    def post(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
         rating = request.data.get("rating")
 
-        if rating not in [1,2,3,4,5] :
+        if rating not in [1, 2, 3, 4, 5]:
             return Response("Rating must be between 1 and 5", status=400)
 
         existing_rating = Rating.objects.filter(book=book,user_id=request.user).exists()
@@ -133,12 +141,11 @@ class RatingAPIView(APIView) :
             return Response("You have already rated this book.", status=400)
         # if request.user in rating.user_id :
         #     return Response("Already Exist", status=400)
-        serializer = RatingSerializer(data = {"rating" : rating})
-        if serializer.is_valid(raise_exception=True) :
-            serializer.save(user_id = request.user, book=book)
+        serializer = RatingSerializer(data={"rating": rating})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(user_id=request.user, book=book)
             return Response(serializer.data, status=200)
         return Response(status=400)
-
 
 
 class CommentListAPIView(APIView):
