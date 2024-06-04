@@ -140,6 +140,12 @@ class BookDetailAPIView(APIView):
         book.delete()
         return Response("No Content", status=204)
 
+class DeletePrologueAPIView(APIView) :
+    def delete(self, request, book_id) :
+        prologue = Chapter.objects.filter(chapter=0, book_id = book_id)
+        prologue.delete()
+        return Response("Prologue deleted successfully", status=204)
+        
 
 class BookLikeAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -176,6 +182,14 @@ class UserLikedBooksAPIView(APIView):
         serializer = BookSerializer(book_likes, many=True)
         return Response(serializer.data, status=200)
 
+class UserBooksAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        user_books = user.books.all()  # 역참조를 이용해 사용자가 작성한 책 리스트를 가져옴
+        serializer = BookSerializer(user_books, many=True)
+        return Response(serializer.data, status=200)
 
 class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
