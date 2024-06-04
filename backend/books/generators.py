@@ -22,7 +22,7 @@ def elements_generator(user_prompt):
 
     examples = [
         {
-            "user_prompt": "",  # 예시 넣어야 함
+            "user_prompt": "Recommend the best synopsis for me. The time period setting is futuristic, the genre is romantic thriller, with detailed worldbuilding and a social, dark adult tone, and the characters should be described in a tense, emotional tone: a synthetic human rights advocate struggling to raise her two daughters after her death, a seasoned detective and journalist exposing discrimination against synthetics",
             "answer": """
                 Title: The Wounded Ones
                 Genre: Romantic Thriller
@@ -30,10 +30,10 @@ def elements_generator(user_prompt):
                 Tone: Tense and Emotional
                 Setting: Neo New York, 2156
                 Characters:
-                Eleanor Blackwood: A synthetic human rights advocate. Struggling to raise her two daughters after her husband was killed in an accident, Eleanor is an old friend of Frank Miller.
-                Lydia Blackwood: Eleanor's oldest daughter, 17-year-old Lydia, has '94%' human DNA.
-                Chloe Blackwood: Eleanor's youngest daughter, 12-year-old Chloe has '62%' human DNA. 
-                Frank Miller: A seasoned detective and journalist who exposes discrimination against synthetic humans and advocates for their equality.
+                Eleanor Blackwood: A synthetic human rights advocate. Struggling to raise her two daughters after her husband was killed in an accident, Eleanor is an old friend of Frank Miller...
+                Lydia Blackwood: Eleanor's oldest daughter, 17-year-old Lydia, has '94%' human DNA...
+                Chloe Blackwood: Eleanor's youngest daughter, 12-year-old Chloe has '62%' human DNA...
+                Frank Miller: A seasoned detective and journalist who exposes discrimination against synthetic humans and advocates for their equality...
             """,
         },
         {
@@ -45,10 +45,10 @@ def elements_generator(user_prompt):
                 Tone: Dark, Intense, and Realistic
                 Setting: Near-future, Global Conflict Zones, Secret Laboratory
                 Characters:
-                Dr Viktor Hallstrom: A once-respected geneticist who has descended into madness, believing that creating elves is the pinnacle of genetic science.
-                Lena: A 12-year-old war orphan with a strong spirit.
-                Max: A 10-year-old boy with a keen intellect and innate curiosity.
-                Sarah Collins: A top journalist who has assembled a team to produce a documentary about the dangers of war and the devastation of post-war areas.
+                Dr Viktor Hallstrom: A once-respected geneticist who has descended into madness, believing that creating elves is the pinnacle of genetic science...
+                Lena: A 12-year-old war orphan with a strong spirit...
+                Max: A 10-year-old boy with a keen intellect and innate curiosity...
+                Sarah Collins: A top journalist who has assembled a team to produce a documentary about the dangers of war and the devastation of post-war areas...
             """,
         },
     ]
@@ -72,7 +72,7 @@ def elements_generator(user_prompt):
                 """
                 You are an expert in fiction. Generate a detailed settings for a novel based on the following user input.
                 Now create a setting(Title, Genre, Theme, Tone, Setting, Characters) for your novel, as shown in the examples.
-                Character entries should only tell you about your character's personality and upbringing.
+                Character entries should only tell you about your character's personality and upbringing.Use “...” to separate them from other characters to make them more recognizable.
                 Just tell me the answer to the input. Don't give interactive answers.
             """,
             ),
@@ -153,6 +153,38 @@ def prologue_generator(elements):
         temperature=1.2,
     )
 
+    examples = [
+        {
+            "setting": """
+                "title": "The Royal Heart's Resolve",
+                "genre": "Medieval Romance",
+                "theme": "Love, Courage, and Resilience",
+                "tone": "Romantic, Heartwarming, and Inspirational",
+                "setting": "Kingdom of Avaloria, Medieval Europe",
+                "characters": "Princess Elara: A kind-hearted and strong-willed princess who must navigate court politics and challenges to find true love and her own path. Prince Aldric: The brave and chivalrous prince from a neighboring kingdom, determined to win Princess Elara's heart and unite their kingdoms through love. Queen Isadora: Elara's regal and wise mother, who navigates the intrigues of court life while guiding her daughter through the challenges of royal duties and romance."
+            """,
+            "answer": """
+                Prologue: 
+                The Kingdom of Avaloria lay bathed in the soft hues of dawn, a land steeped in tales of chivalry and courtly love. Within the stone walls of the castle, Princess Elara gazed out of her window, her mind heavy with the weight of her impending responsibilities. As the heir to the throne, she knew that her duty to her kingdom often overshadowed the desires of her own heart.
+                In a neighboring kingdom, Prince Aldric prepared for his journey to Avaloria, his resolve unwavering as he sought to win the hand of Princess Elara. Their union was not just a matter of love but a beacon of hope for the two realms, a treaty sealed in the chambers of the heart.
+                Meanwhile, Queen Isadora wandered the halls of the castle, her regal posture belying the concerns that knotted her brow. She had seen love kindle empires or extinguish them in a single breath. As the guiding light in her daughter's life, she vowed to protect Elara from the shadows that lurked within the castle walls.
+                And so, against the backdrop of courtly intrigue and whispered secrets, the fates of Princess Elara, Prince Aldric, and Queen Isadora intertwined, bound by a destiny that only love, courage, and resilience could shape.
+            """,
+        },
+    ]
+
+    example_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("human", "{setting}"),
+            ("ai", "{answer}"),
+        ]
+    )
+
+    example_prompt = FewShotChatMessagePromptTemplate(
+        example_prompt=example_prompt,
+        examples=examples,
+    )
+
     prologue_prompt = ChatPromptTemplate.from_messages(
         [
             (
@@ -166,6 +198,7 @@ def prologue_generator(elements):
                     If there are no setting(Title, Genre, Theme, Tone, Setting, Characters) in the input, give a blank answer.
                 """,
             ),
+            example_prompt,
             ("human", "{setting}"),
         ]
     )
@@ -174,7 +207,27 @@ def prologue_generator(elements):
 
     prologue = prologue_chain.invoke({"setting": elements})
 
-    return {"prologue": prologue.content}
+
+    result_text = prologue.content.strip()
+
+    try:
+        result_lines = result_text.split("\n")
+        data = {
+            "prologue": "",
+        }
+        current_key = None
+        for line in result_lines:
+            if line.startswith("Prologue"):
+                data["prologue"] = line.split("Prologue:", 1)[1].strip()
+                current_key = "Prologue"
+            elif current_key == "Prologue":
+                data["prologue"] += " " + line
+
+            data["prologue"] = data["prologue"].strip()
+
+        return data
+    except Exception as e:
+        return e
 
 
 def summary_generator(chapter_num, summary):
@@ -290,6 +343,7 @@ def summary_generator(chapter_num, summary):
     memory.save_context({"input": prompt}, {"output": result.content})
 
     cleaned_story = remove_recommendation_paths(result.content)
-    recommendations = generate_recommendations(chat_history, result.content, next_stage)
+    recommendations = generate_recommendations(
+        chat_history, result.content, next_stage)
 
     return {"final_summary": cleaned_story, "recommendations": recommendations}

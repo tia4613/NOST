@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404, render
+from openai import OpenAI
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -10,6 +11,7 @@ from .serializers import (
     RatingSerializer,
     CommentSerializer,
     ChapterSerializer,
+    ElementsSerializer,
 )
 from django.core import serializers
 from .generators import elements_generator, prologue_generator, summary_generator
@@ -26,14 +28,14 @@ class BookListAPIView(APIView):
     # 새 소설 책 생성
     def post(self, request):
         user_prompt = request.data.get("prompt")
-        language = request.data.get("language","EN")
+        language = request.data.get("language", "EN-US")
         if not user_prompt:
             return Response(
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         content = elements_generator(user_prompt)  # ai로 elements 생성
-        translate_content = translate_summary(content,language)
+        translate_content = translate_summary(content, language)
         content["user_id"] = request.user.pk
         serializer = BookSerializer(data=content)  # db에 title, user_id 저장
         if serializer.is_valid(raise_exception=True):
@@ -47,13 +49,37 @@ class BookListAPIView(APIView):
             )
 
 
+class DALL_EImageAPIView(APIView):
+    def get(self, request, book_id):
+        client = OpenAI()
+        book = get_object_or_404(Book, id=book_id)
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=f"{book.title}, {book.tone}",
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
+        image_url = response.data[0].url
+        return Response({"image_url": image_url})
+
+
 class BookDetailAPIView(APIView):
     # 상세 조회
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         ratings = Rating.objects.filter(book=book)
-        serializer = BookSerializer(book)
-        return Response(serializer.data, status=200)
+
+        # chapter 내용들 가져오기
+        chapters = Chapter.objects.filter(book_id = book_id)
+        chapter_serializer = ChapterSerializer(chapters, many = True)
+
+        # 책 전체 내용 직렬화
+        book_serializer = BookSerializer(book)
+
+        response_data = book_serializer.data
+        response_data['chapters'] = chapter_serializer.data
+        return Response(response_data, status=200)
 
     # chapter(summary) 생성
     def post(self, request, book_id):
@@ -65,10 +91,22 @@ class BookDetailAPIView(APIView):
             )
         chapter = Chapter.objects.filter(book_id=book_id).last()
         if not chapter:
+            book = get_object_or_404(Book, id=book_id)
+            elements = ElementsSerializer(book)
             chapter_num = 0
-            result = prologue_generator(request.data)
-            content = result["prologue"]
+
+            result = prologue_generator(elements.data)
+            serializer = ChapterSerializer(
+                data={"content": result["prologue"], "book_id": book_id}
+            )
+
         else:
+            summary = request.data.get("summary")
+            if not summary:
+                return Response(
+                    {"error": "Missing summary prompt"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             chapter_num = chapter.chapter_num
             result = summary_generator(chapter_num, summary)
             content = result["final_summary"]
@@ -102,7 +140,7 @@ class BookDetailAPIView(APIView):
 class TranslateAPIView(APIView):
     def post(self, request, book_id):
         chapter = get_object_or_404(Chapter, book_id=book_id)
-        language = request.data.get("language", "EN")
+        language = request.data.get("language", "EN-US")
         summary = chapter.content
         translated_summary = translate_summary(summary, language)
         return Response({"translated_summary": translated_summary})
@@ -119,7 +157,7 @@ class BookLikeAPIView(APIView):
             book.is_liked.remove(request.user)
         # 좋아요 추가
         else:
-            book.is_liked.add(request.user)
+            book.is_liked.add(request.user)  
             like_bool = True
         serializer = BookLikeSerializer(book)
         return Response(
@@ -132,8 +170,28 @@ class BookLikeAPIView(APIView):
         )
 
 
+class UserLikedBooksAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        book_likes = (
+            user.book_likes.all()
+        )  # 역참조를 이용해 사용자가 좋아요한 책 리스트를 가져옴
+        serializer = BookSerializer(book_likes, many=True)
+        return Response(serializer.data, status=200)
+
+
 class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
+    def get(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+        user_rating = Rating.objects.filter(book=book, user_id=request.user.id).first()
+        if user_rating:
+            serializer = RatingSerializer(user_rating)
+            return Response(serializer.data, status=200)
+        return Response("User has not rated this book yet.", status=404)
 
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
@@ -142,11 +200,12 @@ class RatingAPIView(APIView):
         if rating not in [1, 2, 3, 4, 5]:
             return Response("Rating must be between 1 and 5", status=400)
 
-        existing_rating = Rating.objects.filter(book=book,user_id=request.user).exists()
-        if existing_rating :
+        existing_rating = Rating.objects.filter(
+            book=book, user_id=request.user
+        ).exists()
+        if existing_rating:
             return Response("You have already rated this book.", status=400)
-        # if request.user in rating.user_id :
-        #     return Response("Already Exist", status=400)
+
         serializer = RatingSerializer(data={"rating": rating})
         if serializer.is_valid(raise_exception=True):
             serializer.save(user_id=request.user, book=book)
