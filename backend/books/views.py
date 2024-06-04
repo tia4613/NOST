@@ -11,6 +11,7 @@ from .serializers import (
     RatingSerializer,
     CommentSerializer,
     ChapterSerializer,
+    ElementsSerializer,
 )
 from django.core import serializers
 from .generators import elements_generator, prologue_generator, summary_generator
@@ -27,14 +28,14 @@ class BookListAPIView(APIView):
     # 새 소설 책 생성
     def post(self, request):
         user_prompt = request.data.get("prompt")
-        language = request.data.get("language","EN-US")
+        language = request.data.get("language", "EN-US")
         if not user_prompt:
             return Response(
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         content = elements_generator(user_prompt)  # ai로 elements 생성
-        translate_content = translate_summary(content,language)
+        translate_content = translate_summary(content, language)
         content["user_id"] = request.user.pk
         serializer = BookSerializer(data=content)  # db에 title, user_id 저장
         if serializer.is_valid(raise_exception=True):
@@ -47,20 +48,21 @@ class BookListAPIView(APIView):
                 status=status.HTTP_201_CREATED,
             )
 
-class DALL_EImageAPIView(APIView) :
+
+class DALL_EImageAPIView(APIView):
     def get(self, request, book_id):
         client = OpenAI()
-        book = get_object_or_404(Book,id=book_id)
+        book = get_object_or_404(Book, id=book_id)
         response = client.images.generate(
-            model = "dall-e-3",
-            prompt = f"{book.title}, {book.tone}",
-            size = "1024x1024",
-            quality = "standard",
+            model="dall-e-3",
+            prompt=f"{book.title}, {book.tone}",
+            size="1024x1024",
+            quality="standard",
             n=1,
         )
         image_url = response.data[0].url
-        return Response({"image_url" : image_url})
-        
+        return Response({"image_url": image_url})
+
 
 class BookDetailAPIView(APIView):
     # 상세 조회
@@ -74,8 +76,10 @@ class BookDetailAPIView(APIView):
     def post(self, request, book_id):
         chapter = Chapter.objects.filter(book_id=book_id).last()
         if not chapter:
+            book = get_object_or_404(Book, id=book_id)
+            elements = ElementsSerializer(book)
             chapter_num = 0
-            result = prologue_generator(request.data)
+            result = prologue_generator(elements.data)
             serializer = ChapterSerializer(
                 data={"content": result["prologue"], "book_id": book_id}
             )
@@ -83,7 +87,8 @@ class BookDetailAPIView(APIView):
             summary = request.data.get("summary")
             if not summary:
                 return Response(
-                    {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
+                    {"error": "Missing summary prompt"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             chapter_num = chapter.chapter_num
             result = summary_generator(chapter_num, summary)
@@ -144,13 +149,19 @@ class BookLikeAPIView(APIView):
             status=200,
         )
 
-class UserLikedBooksAPIView(APIView) :
+
+class UserLikedBooksAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request) :
+
+    def get(self, request):
         user = request.user
-        book_likes = user.book_likes.all() # 역참조를 이용해 사용자가 좋아요한 책 리스트를 가져옴
-        serializer = BookSerializer(book_likes,many=True)
-        return Response(serializer.data,status = 200)
+        book_likes = (
+            user.book_likes.all()
+        )  # 역참조를 이용해 사용자가 좋아요한 책 리스트를 가져옴
+        serializer = BookSerializer(book_likes, many=True)
+        return Response(serializer.data, status=200)
+
+
 class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -161,8 +172,10 @@ class RatingAPIView(APIView):
         if rating not in [1, 2, 3, 4, 5]:
             return Response("Rating must be between 1 and 5", status=400)
 
-        existing_rating = Rating.objects.filter(book=book,user_id=request.user).exists()
-        if existing_rating :
+        existing_rating = Rating.objects.filter(
+            book=book, user_id=request.user
+        ).exists()
+        if existing_rating:
             return Response("You have already rated this book.", status=400)
         # if request.user in rating.user_id :
         #     return Response("Already Exist", status=400)

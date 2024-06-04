@@ -29,6 +29,19 @@ class RatingSerializer(serializers.ModelSerializer):
         read_only_fields = ("book", "user_id")
 
 
+class ElementsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = (
+            "title",
+            "genre",
+            "theme",
+            "tone",
+            "setting",
+            "characters",
+        )
+
+
 class CommentSerializer(serializers.ModelSerializer):
     user_nickname = serializers.SerializerMethodField()
 

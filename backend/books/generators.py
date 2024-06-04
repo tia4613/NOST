@@ -153,6 +153,38 @@ def prologue_generator(elements):
         temperature=1.2,
     )
 
+    examples = [
+        {
+            "setting": """
+                "title": "The Royal Heart's Resolve",
+                "genre": "Medieval Romance",
+                "theme": "Love, Courage, and Resilience",
+                "tone": "Romantic, Heartwarming, and Inspirational",
+                "setting": "Kingdom of Avaloria, Medieval Europe",
+                "characters": "Princess Elara: A kind-hearted and strong-willed princess who must navigate court politics and challenges to find true love and her own path. Prince Aldric: The brave and chivalrous prince from a neighboring kingdom, determined to win Princess Elara's heart and unite their kingdoms through love. Queen Isadora: Elara's regal and wise mother, who navigates the intrigues of court life while guiding her daughter through the challenges of royal duties and romance."
+            """,
+            "answer": """
+                Prologue: 
+                The Kingdom of Avaloria lay bathed in the soft hues of dawn, a land steeped in tales of chivalry and courtly love. Within the stone walls of the castle, Princess Elara gazed out of her window, her mind heavy with the weight of her impending responsibilities. As the heir to the throne, she knew that her duty to her kingdom often overshadowed the desires of her own heart.
+                In a neighboring kingdom, Prince Aldric prepared for his journey to Avaloria, his resolve unwavering as he sought to win the hand of Princess Elara. Their union was not just a matter of love but a beacon of hope for the two realms, a treaty sealed in the chambers of the heart.
+                Meanwhile, Queen Isadora wandered the halls of the castle, her regal posture belying the concerns that knotted her brow. She had seen love kindle empires or extinguish them in a single breath. As the guiding light in her daughter's life, she vowed to protect Elara from the shadows that lurked within the castle walls.
+                And so, against the backdrop of courtly intrigue and whispered secrets, the fates of Princess Elara, Prince Aldric, and Queen Isadora intertwined, bound by a destiny that only love, courage, and resilience could shape.
+            """,
+        },
+    ]
+
+    example_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("human", "{setting}"),
+            ("ai", "{answer}"),
+        ]
+    )
+
+    example_prompt = FewShotChatMessagePromptTemplate(
+        example_prompt=example_prompt,
+        examples=examples,
+    )
+
     prologue_prompt = ChatPromptTemplate.from_messages(
         [
             (
@@ -166,6 +198,7 @@ def prologue_generator(elements):
                     If there are no setting(Title, Genre, Theme, Tone, Setting, Characters) in the input, give a blank answer.
                 """,
             ),
+            example_prompt,
             ("human", "{setting}"),
         ]
     )
@@ -174,7 +207,26 @@ def prologue_generator(elements):
 
     prologue = prologue_chain.invoke({"setting": elements})
 
-    return {"prologue": prologue.content}
+    result_text = prologue.content.strip()
+
+    try:
+        result_lines = result_text.split("\n")
+        data = {
+            "prologue": "",
+        }
+        current_key = None
+        for line in result_lines:
+            if line.startswith("Prologue"):
+                data["prologue"] = line.split("Prologue:", 1)[1].strip()
+                current_key = "Prologue"
+            elif current_key == "Prologue":
+                data["prologue"] += " " + line
+
+            data["prologue"] = data["prologue"].strip()
+
+        return data
+    except Exception as e:
+        return e
 
 
 def summary_generator(chapter_num, summary):
