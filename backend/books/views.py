@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404, render
+from openai import OpenAI
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -26,12 +27,14 @@ class BookListAPIView(APIView):
     # 새 소설 책 생성
     def post(self, request):
         user_prompt = request.data.get("prompt")
+        language = request.data.get("language","EN-US")
         if not user_prompt:
             return Response(
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         content = elements_generator(user_prompt)  # ai로 elements 생성
+        translate_content = translate_summary(content,language)
         content["user_id"] = request.user.pk
         serializer = BookSerializer(data=content)  # db에 title, user_id 저장
         if serializer.is_valid(raise_exception=True):
@@ -39,11 +42,25 @@ class BookListAPIView(APIView):
             return Response(
                 data={
                     "book_id": serializer.data["id"],
-                    "content": content,
+                    "content": translate_content,
                 },  # FE에 content 응답
                 status=status.HTTP_201_CREATED,
             )
 
+class DALL_EImageAPIView(APIView) :
+    def get(self, request, book_id):
+        client = OpenAI()
+        book = get_object_or_404(Book,id=book_id)
+        response = client.images.generate(
+            model = "dall-e-3",
+            prompt = f"{book.title}, {book.tone}",
+            size = "1024x1024",
+            quality = "standard",
+            n=1,
+        )
+        image_url = response.data[0].url
+        return Response({"image_url" : image_url})
+        
 
 class BookDetailAPIView(APIView):
     # 상세 조회
@@ -98,7 +115,7 @@ class BookDetailAPIView(APIView):
 class TranslateAPIView(APIView):
     def post(self, request, book_id):
         chapter = get_object_or_404(Chapter, book_id=book_id)
-        language = request.data.get("language", "EN")
+        language = request.data.get("language", "EN-US")
         summary = chapter.content
         translated_summary = translate_summary(summary, language)
         return Response({"translated_summary": translated_summary})
@@ -109,10 +126,10 @@ class BookLikeAPIView(APIView):
 
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
+        like_bool = False
         # 좋아요 삭제
         if request.user in book.is_liked.all():
             book.is_liked.remove(request.user)
-            like_bool = False
         # 좋아요 추가
         else:
             book.is_liked.add(request.user)
@@ -127,7 +144,13 @@ class BookLikeAPIView(APIView):
             status=200,
         )
 
-
+class UserLikedBooksAPIView(APIView) :
+    permission_classes = [IsAuthenticated]
+    def get(self, request) :
+        user = request.user
+        book_likes = user.book_likes.all() # 역참조를 이용해 사용자가 좋아요한 책 리스트를 가져옴
+        serializer = BookSerializer(book_likes,many=True)
+        return Response(serializer.data,status = 200)
 class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -138,8 +161,8 @@ class RatingAPIView(APIView):
         if rating not in [1, 2, 3, 4, 5]:
             return Response("Rating must be between 1 and 5", status=400)
 
-        existing_rating = Rating.objects.filter(book=book, user_id=request.user).first()
-        if existing_rating:
+        existing_rating = Rating.objects.filter(book=book,user_id=request.user).exists()
+        if existing_rating :
             return Response("You have already rated this book.", status=400)
         # if request.user in rating.user_id :
         #     return Response("Already Exist", status=400)
@@ -173,7 +196,7 @@ class CommentDetailAPIView(APIView):
             serializer.save()
             return Response(serializer.data)
 
-    def delete(self, request, comment_id):
+    def delete(self, request, book_id, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
         comment.delete()
         return Response("NO comment", status=204)
