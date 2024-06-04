@@ -82,6 +82,7 @@ class BookDetailAPIView(APIView):
     # chapter(summary) 생성
     def post(self, request, book_id):
         summary = request.data.get("summary")
+        language = request.data.get("language", "EN-US")
         if not summary:
             return Response(
                 {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
