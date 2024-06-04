@@ -84,22 +84,19 @@ class BookDetailAPIView(APIView):
     # chapter(summary) 생성
     def post(self, request, book_id):
         summary = request.data.get("summary")
-        language = request.data.get("language","EN-US")
+        language = request.data.get("language", "EN-US")
         if not summary:
             return Response(
                 {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
+
         chapter = Chapter.objects.filter(book_id=book_id).last()
         if not chapter:
             book = get_object_or_404(Book, id=book_id)
             elements = ElementsSerializer(book)
             chapter_num = 0
-
             result = prologue_generator(elements.data)
-            serializer = ChapterSerializer(
-                data={"content": result["prologue"], "book_id": book_id}
-            )
-
+            content = result["prologue"]
         else:
             summary = request.data.get("summary")
             if not summary:
@@ -110,15 +107,22 @@ class BookDetailAPIView(APIView):
             chapter_num = chapter.chapter_num
             result = summary_generator(chapter_num, summary)
             content = result["final_summary"]
+
         translated_content = translate_summary(content,language)
+        if not translated_content:
+            return Response(
+                {"error": "Translation failed or empty result"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
         serializer = ChapterSerializer(
-            data={"content": translated_content, "book_id": book_id}
+            data={"content": translated_content, "book_id": book_id, "chapter_num" : chapter_num}
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             result["book_id"] = book_id
-            return Response(data={"translated_content" : translated_content,"result" : result}, status=status.HTTP_201_CREATED)
-        
+            result["translated_content"] = translated_content
+            return Response(data=result, status=status.HTTP_201_CREATED)
 
     # 글 수정
     def put(self, request, book_id):
@@ -135,15 +139,6 @@ class BookDetailAPIView(APIView):
         book = get_object_or_404(Book, id=book_id)
         book.delete()
         return Response("No Content", status=204)
-
-
-class TranslateAPIView(APIView):
-    def post(self, request, book_id):
-        chapter = get_object_or_404(Chapter, book_id=book_id)
-        language = request.data.get("language", "EN-US")
-        summary = chapter.content
-        translated_summary = translate_summary(summary, language)
-        return Response({"translated_summary": translated_summary})
 
 
 class BookLikeAPIView(APIView):

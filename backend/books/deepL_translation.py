@@ -16,6 +16,3 @@ def translate_summary(content, language) :
     elif isinstance(content,str) : #data 값이 text 형태일때 번역
         result = translator.translate_text(content, target_lang=language)
         return result.text
-    else:
-    # 딕셔너리 또는 문자열이 아닌 경우에 대한 처리 추가
-        return "Invalid content type"
