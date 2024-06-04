@@ -175,6 +175,7 @@ def prologue_generator(elements):
     prologue = prologue_chain.invoke({"setting": elements})
 
     return {"prologue": prologue.content}
+    # return {"final_summary" : prologue.content.strip()}
 
 
 def summary_generator(chapter_num, summary):
