@@ -55,21 +55,24 @@ class BookDetailAPIView(APIView):
 
     # chapter(summary) 생성
     def post(self, request, book_id):
-        summary = request.data.get("summary")
-        if not summary:
-            return Response(
-                {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
-            )
         chapter = Chapter.objects.filter(book_id=book_id).last()
         if not chapter:
             chapter_num = 0
             result = prologue_generator(request.data)
+            serializer = ChapterSerializer(
+                data={"content": result["prologue"], "book_id": book_id}
+            )
         else:
+            summary = request.data.get("summary")
+            if not summary:
+                return Response(
+                    {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
+                )
             chapter_num = chapter.chapter_num
             result = summary_generator(chapter_num, summary)
-        serializer = ChapterSerializer(
-            data={"content": result["final_summary"], "book_id": book_id}
-        )
+            serializer = ChapterSerializer(
+                data={"content": result["final_summary"], "book_id": book_id}
+            )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             result["book_id"] = book_id
