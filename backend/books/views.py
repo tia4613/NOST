@@ -165,6 +165,14 @@ class UserLikedBooksAPIView(APIView):
 class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+        user_rating = Rating.objects.filter(book=book, user_id=request.user.id).first()
+        if user_rating:
+            serializer = RatingSerializer(user_rating)
+            return Response(serializer.data, status=200)
+        return Response("User has not rated this book yet.", status=404)
+
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         rating = request.data.get("rating")
@@ -177,8 +185,7 @@ class RatingAPIView(APIView):
         ).exists()
         if existing_rating:
             return Response("You have already rated this book.", status=400)
-        # if request.user in rating.user_id :
-        #     return Response("Already Exist", status=400)
+
         serializer = RatingSerializer(data={"rating": rating})
         if serializer.is_valid(raise_exception=True):
             serializer.save(user_id=request.user, book=book)
