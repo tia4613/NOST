@@ -83,17 +83,20 @@ class BookDetailAPIView(APIView):
 
     # chapter(summary) 생성
     def post(self, request, book_id):
+        summary = request.data.get("summary")
+        language = request.data.get("language", "EN-US")
+        if not summary:
+            return Response(
+                {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         chapter = Chapter.objects.filter(book_id=book_id).last()
         if not chapter:
             book = get_object_or_404(Book, id=book_id)
             elements = ElementsSerializer(book)
             chapter_num = 0
-
             result = prologue_generator(elements.data)
-            serializer = ChapterSerializer(
-                data={"content": result["prologue"], "book_id": book_id}
-            )
-
+            content = result["prologue"]
         else:
             summary = request.data.get("summary")
             if not summary:
@@ -103,13 +106,22 @@ class BookDetailAPIView(APIView):
                 )
             chapter_num = chapter.chapter_num
             result = summary_generator(chapter_num, summary)
+            content = result["final_summary"]
 
-            serializer = ChapterSerializer(
-                data={"content": result["final_summary"], "book_id": book_id}
+        translated_content = translate_summary(content,language)
+        if not translated_content:
+            return Response(
+                {"error": "Translation failed or empty result"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+        serializer = ChapterSerializer(
+            data={"content": translated_content, "book_id": book_id, "chapter_num" : chapter_num}
+        )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             result["book_id"] = book_id
+            result["translated_content"] = translated_content
             return Response(data=result, status=status.HTTP_201_CREATED)
 
     # 글 수정
@@ -128,15 +140,12 @@ class BookDetailAPIView(APIView):
         book.delete()
         return Response("No Content", status=204)
 
-
-class TranslateAPIView(APIView):
-    def post(self, request, book_id):
-        chapter = get_object_or_404(Chapter, book_id=book_id)
-        language = request.data.get("language", "EN-US")
-        summary = chapter.content
-        translated_summary = translate_summary(summary, language)
-        return Response({"translated_summary": translated_summary})
-
+class DeletePrologueAPIView(APIView) :
+    def delete(self, request, book_id) :
+        prologue = Chapter.objects.filter(chapter=0, book_id = book_id)
+        prologue.delete()
+        return Response("Prologue deleted successfully", status=204)
+        
 
 class BookLikeAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -173,6 +182,14 @@ class UserLikedBooksAPIView(APIView):
         serializer = BookSerializer(book_likes, many=True)
         return Response(serializer.data, status=200)
 
+class UserBooksAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        user_books = user.books.all()  # 역참조를 이용해 사용자가 작성한 책 리스트를 가져옴
+        serializer = BookSerializer(user_books, many=True)
+        return Response(serializer.data, status=200)
 
 class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
