@@ -58,6 +58,7 @@ class BookDetailAPIView(APIView):
     # chapter(summary) 생성
     def post(self, request, book_id):
         summary = request.data.get("summary")
+        language = request.data.get("language","EN-US")
         if not summary:
             return Response(
                 {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
@@ -66,16 +67,20 @@ class BookDetailAPIView(APIView):
         if not chapter:
             chapter_num = 0
             result = prologue_generator(request.data)
+            content = result["prologue"]
         else:
             chapter_num = chapter.chapter_num
             result = summary_generator(chapter_num, summary)
+            content = result["final_summary"]
+        translated_content = translate_summary(content,language)
         serializer = ChapterSerializer(
-            data={"content": result["final_summary"], "book_id": book_id}
+            data={"content": translated_content, "book_id": book_id}
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             result["book_id"] = book_id
-            return Response(data=result, status=status.HTTP_201_CREATED)
+            return Response(data={"translated_content" : translated_content,"result" : result}, status=status.HTTP_201_CREATED)
+        
 
     # 글 수정
     def put(self, request, book_id):
