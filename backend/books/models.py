@@ -11,6 +11,7 @@ class Book(models.Model):
     tone = models.CharField(max_length=255)
     setting = models.CharField(max_length=500)
     characters = models.TextField()
+    full_text = models.TextField(blank=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # Foriegn Key
@@ -49,9 +50,6 @@ class Rating(models.Model):
             )
         ]
 
-    def __str__(self):
-        return f"{self.book.title} - {self.rating}"
-
 
 class Comment(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="comments")
@@ -85,3 +83,9 @@ class Chapter(models.Model):
             else:
                 self.chapter_num = 0
         super(Chapter, self).save(*args, **kwargs)
+
+    def update_full_text(self) :
+        book = self.book_id
+        chapters = Chapter.objects.filter(book_id = book).order_by('chapter_num')
+        book.full_text = "\n\n".join(chapter.content for chapter in chapters)
+        book.save()

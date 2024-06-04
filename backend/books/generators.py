@@ -207,6 +207,7 @@ def prologue_generator(elements):
 
     prologue = prologue_chain.invoke({"setting": elements})
 
+
     result_text = prologue.content.strip()
 
     try:

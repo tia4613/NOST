@@ -69,8 +69,17 @@ class BookDetailAPIView(APIView):
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         ratings = Rating.objects.filter(book=book)
-        serializer = BookSerializer(book)
-        return Response(serializer.data, status=200)
+
+        # chapter 내용들 가져오기
+        chapters = Chapter.objects.filter(book_id = book_id)
+        chapter_serializer = ChapterSerializer(chapters, many = True)
+
+        # 책 전체 내용 직렬화
+        book_serializer = BookSerializer(book)
+
+        response_data = book_serializer.data
+        response_data['chapters'] = chapter_serializer.data
+        return Response(response_data, status=200)
 
     # chapter(summary) 생성
     def post(self, request, book_id):
@@ -79,10 +88,12 @@ class BookDetailAPIView(APIView):
             book = get_object_or_404(Book, id=book_id)
             elements = ElementsSerializer(book)
             chapter_num = 0
+
             result = prologue_generator(elements.data)
             serializer = ChapterSerializer(
                 data={"content": result["prologue"], "book_id": book_id}
             )
+
         else:
             summary = request.data.get("summary")
             if not summary:
@@ -92,6 +103,7 @@ class BookDetailAPIView(APIView):
                 )
             chapter_num = chapter.chapter_num
             result = summary_generator(chapter_num, summary)
+
             serializer = ChapterSerializer(
                 data={"content": result["final_summary"], "book_id": book_id}
             )
@@ -137,7 +149,7 @@ class BookLikeAPIView(APIView):
             book.is_liked.remove(request.user)
         # 좋아요 추가
         else:
-            book.is_liked.add(request.user)
+            book.is_liked.add(request.user)  
             like_bool = True
         serializer = BookLikeSerializer(book)
         return Response(
