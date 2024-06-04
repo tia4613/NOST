@@ -22,7 +22,7 @@ def elements_generator(user_prompt):
 
     examples = [
         {
-            "user_prompt": "Recommend the best synopsis for me. The time period setting is futuristic, the genre is romantic thriller, with detailed worldbuilding and a social, dark adult tone, and the characters should be described in a tense, emotional tone: a synthetic human rights advocate struggling to raise her two daughters after her death, a seasoned detective and journalist exposing discrimination against synthetics",
+            "user_prompt": "Recommend the best elements of novel for me. The time period setting is futuristic, the genre is romantic thriller, with detailed worldbuilding and a social, dark adult tone, and the characters should be described in a tense, emotional tone: a synthetic human rights advocate struggling to raise her two daughters after her death, a seasoned detective and journalist exposing discrimination against synthetics",
             "answer": """
                 Title: The Wounded Ones
                 Genre: Romantic Thriller
@@ -342,7 +342,6 @@ def summary_generator(chapter_num, summary):
     memory.save_context({"input": prompt}, {"output": result.content})
 
     cleaned_story = remove_recommendation_paths(result.content)
-    recommendations = generate_recommendations(
-        chat_history, result.content, next_stage)
+    recommendations = generate_recommendations(chat_history, result.content, next_stage)
 
     return {"final_summary": cleaned_story, "recommendations": recommendations}
