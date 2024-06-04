@@ -22,7 +22,7 @@ def elements_generator(user_prompt):
 
     examples = [
         {
-            "user_prompt": "",  # 예시 넣어야 함
+            "user_prompt": "Recommend the best synopsis for me. The time period setting is futuristic, the genre is romantic thriller, with detailed worldbuilding and a social, dark adult tone, and the characters should be described in a tense, emotional tone: a synthetic human rights advocate struggling to raise her two daughters after her death, a seasoned detective and journalist exposing discrimination against synthetics",
             "answer": """
                 Title: The Wounded Ones
                 Genre: Romantic Thriller
@@ -30,10 +30,10 @@ def elements_generator(user_prompt):
                 Tone: Tense and Emotional
                 Setting: Neo New York, 2156
                 Characters:
-                Eleanor Blackwood: A synthetic human rights advocate. Struggling to raise her two daughters after her husband was killed in an accident, Eleanor is an old friend of Frank Miller.
-                Lydia Blackwood: Eleanor's oldest daughter, 17-year-old Lydia, has '94%' human DNA.
-                Chloe Blackwood: Eleanor's youngest daughter, 12-year-old Chloe has '62%' human DNA. 
-                Frank Miller: A seasoned detective and journalist who exposes discrimination against synthetic humans and advocates for their equality.
+                Eleanor Blackwood: A synthetic human rights advocate. Struggling to raise her two daughters after her husband was killed in an accident, Eleanor is an old friend of Frank Miller...
+                Lydia Blackwood: Eleanor's oldest daughter, 17-year-old Lydia, has '94%' human DNA...
+                Chloe Blackwood: Eleanor's youngest daughter, 12-year-old Chloe has '62%' human DNA...
+                Frank Miller: A seasoned detective and journalist who exposes discrimination against synthetic humans and advocates for their equality...
             """,
         },
         {
@@ -45,10 +45,10 @@ def elements_generator(user_prompt):
                 Tone: Dark, Intense, and Realistic
                 Setting: Near-future, Global Conflict Zones, Secret Laboratory
                 Characters:
-                Dr Viktor Hallstrom: A once-respected geneticist who has descended into madness, believing that creating elves is the pinnacle of genetic science.
-                Lena: A 12-year-old war orphan with a strong spirit.
-                Max: A 10-year-old boy with a keen intellect and innate curiosity.
-                Sarah Collins: A top journalist who has assembled a team to produce a documentary about the dangers of war and the devastation of post-war areas.
+                Dr Viktor Hallstrom: A once-respected geneticist who has descended into madness, believing that creating elves is the pinnacle of genetic science...
+                Lena: A 12-year-old war orphan with a strong spirit...
+                Max: A 10-year-old boy with a keen intellect and innate curiosity...
+                Sarah Collins: A top journalist who has assembled a team to produce a documentary about the dangers of war and the devastation of post-war areas...
             """,
         },
     ]
@@ -72,7 +72,7 @@ def elements_generator(user_prompt):
                 """
                 You are an expert in fiction. Generate a detailed settings for a novel based on the following user input.
                 Now create a setting(Title, Genre, Theme, Tone, Setting, Characters) for your novel, as shown in the examples.
-                Character entries should only tell you about your character's personality and upbringing.
+                Character entries should only tell you about your character's personality and upbringing.Use “...” to separate them from other characters to make them more recognizable.
                 Just tell me the answer to the input. Don't give interactive answers.
             """,
             ),
@@ -342,6 +342,7 @@ def summary_generator(chapter_num, summary):
     memory.save_context({"input": prompt}, {"output": result.content})
 
     cleaned_story = remove_recommendation_paths(result.content)
-    recommendations = generate_recommendations(chat_history, result.content, next_stage)
+    recommendations = generate_recommendations(
+        chat_history, result.content, next_stage)
 
     return {"final_summary": cleaned_story, "recommendations": recommendations}
