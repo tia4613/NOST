@@ -11,6 +11,7 @@ class Book(models.Model):
     tone = models.CharField(max_length=255)
     setting = models.CharField(max_length=500)
     characters = models.TextField()
+    image = models.ImageField(upload_to='books',null=True,blank=True)
     full_text = models.TextField(blank=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -37,10 +38,7 @@ class Rating(models.Model):
         (4, "4"),
         (5, "5"),
     ]
-    # book = models.ForeignKey(Book, related_name='ratings', on_delete=models.CASCADE)
-    # user_id = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="rating_user", on_delete=models.CASCADE)
-    # rating = models.PositiveIntegerField(blank=True)
-    
+
     book = models.ForeignKey(Book, related_name="ratings", on_delete=models.CASCADE)
     user_id = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name="rating_user", on_delete=models.CASCADE
