@@ -1,47 +1,67 @@
 from django.shortcuts import get_object_or_404, render
+from openai import OpenAI
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .models import Book, Comment, Rating
+from .models import Book, Comment, Rating, Chapter
 from .serializers import (
     BookSerializer,
     BookLikeSerializer,
     RatingSerializer,
     CommentSerializer,
     ChapterSerializer,
+    ElementsSerializer,
 )
 from django.core import serializers
-from .generators import synopsis_generator, summary_generator
+from .generators import elements_generator, prologue_generator, summary_generator
+from .deepL_translation import translate_summary
 
 
-class BookListAPIView(ListAPIView):
+class BookListAPIView(APIView):
     # 전체 목록 조회
-    def get(self, request) :
-        books = Book.objects.order_by('-created_at')
+    def get(self, request):
+        books = Book.objects.order_by("-created_at")
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data)
-        
+
     # 새 소설 책 생성
     def post(self, request):
         user_prompt = request.data.get("prompt")
+        language = request.data.get("language", "EN-US")
         if not user_prompt:
             return Response(
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        content = synopsis_generator(user_prompt)  # ai로 title, synopsis 생성
-        title = content["title"]
-        serializer = BookSerializer(
-            data={"title": title, "user_id": request.user.pk}
-        )  # db에 title, user_id 저장
+        content = elements_generator(user_prompt)  # ai로 elements 생성
+        translate_content = translate_summary(content, language)
+        content["user_id"] = request.user.pk
+        serializer = BookSerializer(data=content)  # db에 title, user_id 저장
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(
-                data={'book_id':serializer.data['id'],"content": content},  # FE에 content 응답
+                data={
+                    "book_id": serializer.data["id"],
+                    "content": translate_content,
+                },  # FE에 content 응답
                 status=status.HTTP_201_CREATED,
             )
+
+
+class DALL_EImageAPIView(APIView):
+    def get(self, request, book_id):
+        client = OpenAI()
+        book = get_object_or_404(Book, id=book_id)
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=f"{book.title}, {book.tone}",
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
+        image_url = response.data[0].url
+        return Response({"image_url": image_url})
 
 
 class BookDetailAPIView(APIView):
@@ -49,31 +69,66 @@ class BookDetailAPIView(APIView):
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         ratings = Rating.objects.filter(book=book)
-        serializer = BookSerializer(book)
-        return Response(serializer.data, status=200)
-    
+
+        # chapter 내용들 가져오기
+        chapters = Chapter.objects.filter(book_id = book_id)
+        chapter_serializer = ChapterSerializer(chapters, many = True)
+
+        # 책 전체 내용 직렬화
+        book_serializer = BookSerializer(book)
+
+        response_data = book_serializer.data
+        response_data['chapters'] = chapter_serializer.data
+        return Response(response_data, status=200)
+
     # chapter(summary) 생성
     def post(self, request, book_id):
         summary = request.data.get("summary")
+        language = request.data.get("language", "EN-US")
         if not summary:
             return Response(
                 {"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
-        result = summary_generator(summary)
-        book=get_object_or_404(Book, id=book_id)
+
+        chapter = Chapter.objects.filter(book_id=book_id).last()
+        if not chapter:
+            book = get_object_or_404(Book, id=book_id)
+            elements = ElementsSerializer(book)
+            chapter_num = 0
+            result = prologue_generator(elements.data)
+            content = result["prologue"]
+        else:
+            summary = request.data.get("summary")
+            if not summary:
+                return Response(
+                    {"error": "Missing summary prompt"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            chapter_num = chapter.chapter_num
+            result = summary_generator(chapter_num, summary)
+            content = result["final_summary"]
+
+        translated_content = translate_summary(content,language)
+        if not translated_content:
+            return Response(
+                {"error": "Translation failed or empty result"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
         serializer = ChapterSerializer(
-            data={"content": result["final_summary"], "book_id": book.pk}
+            data={"content": translated_content, "book_id": book_id, "chapter_num" : chapter_num}
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            result['book_id']=book.pk
+            result["book_id"] = book_id
+            result["translated_content"] = translated_content
             return Response(data=result, status=status.HTTP_201_CREATED)
 
     # 글 수정
     def put(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         serializer = BookSerializer(book, data=request.data, partial=True)
-        
+
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=201)
@@ -85,6 +140,12 @@ class BookDetailAPIView(APIView):
         book.delete()
         return Response("No Content", status=204)
 
+class DeletePrologueAPIView(APIView) :
+    def delete(self, request, book_id) :
+        prologue = Chapter.objects.filter(chapter=0, book_id = book_id)
+        prologue.delete()
+        return Response("Prologue deleted successfully", status=204)
+        
 
 class BookLikeAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -95,10 +156,9 @@ class BookLikeAPIView(APIView):
         # 좋아요 삭제
         if request.user in book.is_liked.all():
             book.is_liked.remove(request.user)
-
         # 좋아요 추가
         else:
-            book.is_liked.add(request.user)
+            book.is_liked.add(request.user)  
             like_bool = True
         serializer = BookLikeSerializer(book)
         return Response(
@@ -110,25 +170,29 @@ class BookLikeAPIView(APIView):
             status=200,
         )
 
-class RatingAPIView(APIView):
+
+class UserLikedBooksAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, book_id):
-        book = get_object_or_404(Book, id=book_id)
-        rating = request.data.get("rating")
+    def get(self, request):
+        user = request.user
+        book_likes = (
+            user.book_likes.all()
+        )  # 역참조를 이용해 사용자가 좋아요한 책 리스트를 가져옴
+        serializer = BookSerializer(book_likes, many=True)
+        return Response(serializer.data, status=200)
 
-        if rating not in [1, 2, 3, 4, 5]:
-            return Response("Rating must be between 1 and 5", status=400)
+class UserBooksAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-        existing_rating = Rating.objects.filter(book=book, user_id=request.user).exists()
-        if existing_rating:
-            return Response("You have already rated this book.", status=400)
+    def get(self, request):
+        user = request.user
+        user_books = user.books.all()  # 역참조를 이용해 사용자가 작성한 책 리스트를 가져옴
+        serializer = BookSerializer(user_books, many=True)
+        return Response(serializer.data, status=200)
 
-        serializer = RatingSerializer(data={"rating": rating})
-        if serializer.is_valid(raise_exception=True):
-            serializer.save(user_id=request.user, book=book)
-            return Response(serializer.data, status=200)
-        return Response(status=400)
+class RatingAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
@@ -137,6 +201,25 @@ class RatingAPIView(APIView):
             serializer = RatingSerializer(user_rating)
             return Response(serializer.data, status=200)
         return Response("User has not rated this book yet.", status=404)
+
+    def post(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+        rating = request.data.get("rating")
+
+        if rating not in [1, 2, 3, 4, 5]:
+            return Response("Rating must be between 1 and 5", status=400)
+
+        existing_rating = Rating.objects.filter(
+            book=book, user_id=request.user
+        ).exists()
+        if existing_rating:
+            return Response("You have already rated this book.", status=400)
+
+        serializer = RatingSerializer(data={"rating": rating})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(user_id=request.user, book=book)
+            return Response(serializer.data, status=200)
+        return Response(status=400)
 
 
 class CommentListAPIView(APIView):
@@ -166,21 +249,3 @@ class CommentDetailAPIView(APIView):
         comment = get_object_or_404(Comment, id=comment_id)
         comment.delete()
         return Response("NO comment", status=204)
-
-class UserLikedBooksAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        book_likes = user.book_likes.all()  # 역참조를 이용해 사용자가 좋아요한 책 리스트를 가져옴
-        serializer = BookSerializer(book_likes, many=True)
-        return Response(serializer.data, status=200)
-
-class UserBooksAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        user_books = user.books.all()  # 역참조를 이용해 사용자가 작성한 책 리스트를 가져옴
-        serializer = BookSerializer(user_books, many=True)
-        return Response(serializer.data, status=200)
