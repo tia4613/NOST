@@ -134,7 +134,6 @@ def elements_generator(user_prompt):
         return data
     except Exception as e:
         logging.error(f"Error parsing synopsis response: {e}")
-        print(e)
         return {
             "title": "",
             "genre": "",
