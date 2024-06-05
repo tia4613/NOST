@@ -32,7 +32,7 @@ class Rating(models.Model) :
     ]
     book = models.ForeignKey(Book, related_name='ratings', on_delete=models.CASCADE)
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="rating_user", on_delete=models.CASCADE)
-    rating = models.PositiveIntegerField(choices=RATING_CHOICES, blank=True)
+    rating = models.PositiveIntegerField(blank=True)
 
     class Meta :
         constraints = [

@@ -91,10 +91,11 @@ class BookLikeAPIView(APIView):
 
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
+        like_bool = False
         # 좋아요 삭제
         if request.user in book.is_liked.all():
             book.is_liked.remove(request.user)
-            like_bool = False
+
         # 좋아요 추가
         else:
             book.is_liked.add(request.user)
@@ -109,27 +110,33 @@ class BookLikeAPIView(APIView):
             status=200,
         )
 
-class RatingAPIView(APIView) :
+class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self,request,book_id) :
-        book = get_object_or_404(Book, id = book_id)
+    def post(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
         rating = request.data.get("rating")
 
-        if rating not in [1,2,3,4,5] :
+        if rating not in [1, 2, 3, 4, 5]:
             return Response("Rating must be between 1 and 5", status=400)
 
-        existing_rating = Rating.objects.filter(book=book,user_id=request.user).first()
-        if existing_rating :
+        existing_rating = Rating.objects.filter(book=book, user_id=request.user).exists()
+        if existing_rating:
             return Response("You have already rated this book.", status=400)
-        # if request.user in rating.user_id :
-        #     return Response("Already Exist", status=400)
-        serializer = RatingSerializer(data = {"rating" : rating})
-        if serializer.is_valid(raise_exception=True) :
-            serializer.save(user_id = request.user, book=book)
+
+        serializer = RatingSerializer(data={"rating": rating})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(user_id=request.user, book=book)
             return Response(serializer.data, status=200)
         return Response(status=400)
 
+    def get(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+        user_rating = Rating.objects.filter(book=book, user_id=request.user.id).first()
+        if user_rating:
+            serializer = RatingSerializer(user_rating)
+            return Response(serializer.data, status=200)
+        return Response("User has not rated this book yet.", status=404)
 
 
 class CommentListAPIView(APIView):
@@ -155,7 +162,25 @@ class CommentDetailAPIView(APIView):
             serializer.save()
             return Response(serializer.data)
 
-    def delete(self, request, comment_id):
+    def delete(self, request, book_id, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
         comment.delete()
         return Response("NO comment", status=204)
+
+class UserLikedBooksAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        book_likes = user.book_likes.all()  # 역참조를 이용해 사용자가 좋아요한 책 리스트를 가져옴
+        serializer = BookSerializer(book_likes, many=True)
+        return Response(serializer.data, status=200)
+
+class UserBooksAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        user_books = user.books.all()  # 역참조를 이용해 사용자가 작성한 책 리스트를 가져옴
+        serializer = BookSerializer(user_books, many=True)
+        return Response(serializer.data, status=200)
