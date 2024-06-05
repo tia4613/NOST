@@ -142,7 +142,7 @@ class BookDetailAPIView(APIView):
 
 class DeletePrologueAPIView(APIView) :
     def delete(self, request, book_id) :
-        prologue = Chapter.objects.filter(chapter=0, book_id = book_id)
+        prologue = Chapter.objects.filter(chapter_num=0, book_id = book_id)
         prologue.delete()
         return Response("Prologue deleted successfully", status=204)
         
