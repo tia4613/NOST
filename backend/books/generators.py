@@ -249,12 +249,12 @@ def summary_generator(chapter_num, summary):
 
     current_stage, next_stage = None, None
 
-    for i in range(4) :
-        if (chapter_num-1)//3 == i :
+    for i in range(5) :
+        if (chapter_num-1)//6 == i :
             current_stage = stage[i]
-            if chapter_num % 3 == 0 :
+            if chapter_num % 6 == 0 :
                 next_stage = stage[i+1]
-            elif chapter_num == 12 :    
+            elif chapter_num == 30 :    
                 next_stage = None
             else :    
                 next_stage = stage[i]
@@ -274,7 +274,7 @@ def summary_generator(chapter_num, summary):
             ("human", "{prompt}"),
         ]
     )
-    if chapter_num <= 11:
+    if chapter_num <= 29:
         recommend_template = ChatPromptTemplate.from_messages(
             [
                 (
@@ -355,7 +355,7 @@ def summary_generator(chapter_num, summary):
     memory.save_context({"input": prompt}, {"output": result.content})
 
     cleaned_story = remove_recommendation_paths(result.content)
-    if chapter_num <= 11:
+    if chapter_num <= 29:
         recommendations = generate_recommendations(
             chat_history, result.content, next_stage)
 
