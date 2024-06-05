@@ -22,7 +22,7 @@ def elements_generator(user_prompt):
 
     examples = [
         {
-            "user_prompt": "Recommend the best elements of novel for me. The time period setting is futuristic, the genre is romantic thriller, with detailed worldbuilding and a social, dark adult tone, and the characters should be described in a tense, emotional tone: a synthetic human rights advocate struggling to raise her two daughters after her death, a seasoned detective and journalist exposing discrimination against synthetics",
+            "user_prompt": "",
             "answer": """
                 Title: The Wounded Ones
                 Genre: Romantic Thriller

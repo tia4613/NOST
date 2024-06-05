@@ -122,6 +122,7 @@ class BookDetailAPIView(APIView):
             serializer.save()
             result["book_id"] = book_id
             result["translated_content"] = translated_content
+            result["chapter_num"] = chapter_num
             return Response(data=result, status=status.HTTP_201_CREATED)
 
     # 글 수정
