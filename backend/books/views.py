@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404, render
 from openai import OpenAI
+import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -14,6 +15,7 @@ from .serializers import (
     ElementsSerializer,
 )
 from django.core import serializers
+from django.core.files.base import ContentFile
 from .generators import elements_generator, prologue_generator, summary_generator
 from .deepL_translation import translate_summary
 
@@ -50,7 +52,7 @@ class BookListAPIView(APIView):
 
 
 class DALL_EImageAPIView(APIView):
-    def get(self, request, book_id):
+    def post(self, request, book_id):
         client = OpenAI()
         book = get_object_or_404(Book, id=book_id)
         response = client.images.generate(
@@ -60,9 +62,16 @@ class DALL_EImageAPIView(APIView):
             quality="standard",
             n=1,
         )
-        image_url = response.data[0].url
-        return Response({"image_url": image_url})
+        res = requests.get(response.data[0].url)
+        book.image = ContentFile(res.content, name = f'{book.title}.png')
+        book.save()
 
+        serializer = BookSerializer(instance=book)
+        return Response(serializer.data, status = 200)
+        # image_url = response.data[0].url
+        # return Response({"image_url": image_url})
+
+        
 
 class BookDetailAPIView(APIView):
     # 상세 조회
