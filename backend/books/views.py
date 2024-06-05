@@ -19,8 +19,8 @@ from .deepL_translation import translate_summary
 
 
 class BookListAPIView(APIView):
-    permission_classes=[IsAuthenticated]
-    
+    permission_classes = [IsAuthenticated]
+
     # 전체 목록 조회
     def get(self, request):
         books = Book.objects.order_by("-created_at")
@@ -52,13 +52,16 @@ class BookListAPIView(APIView):
 
 
 class DALL_EImageAPIView(APIView):
-    permission_classes=[IsAuthenticated]
-    
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, book_id):
         client = OpenAI()
         book = get_object_or_404(Book, id=book_id)
         if book.user_id is not request.user:
-            return Response({'error':"You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "You don't have permission."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
         response = client.images.generate(
             model="dall-e-3",
             prompt=f"{book.title}, {book.tone}",
@@ -71,28 +74,40 @@ class DALL_EImageAPIView(APIView):
 
 
 class BookDetailAPIView(APIView):
-    permission_classes=[IsAuthenticated]
-    
+    permission_classes = [IsAuthenticated]
+
     # 상세 조회
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         ratings = Rating.objects.filter(book=book)
-        serializer = BookSerializer(book)
-        return Response(serializer.data, status=200)
+
+        # chapter 내용들 가져오기
+        chapters = Chapter.objects.filter(book_id=book_id)
+        chapter_serializer = ChapterSerializer(chapters, many=True)
+
+        # 책 전체 내용 직렬화
+        book_serializer = BookSerializer(book)
+
+        response_data = book_serializer.data
+        response_data["chapters"] = chapter_serializer.data
+        return Response(response_data, status=200)
 
     # chapter(summary) 생성
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         if book.user_id != request.user:
-            return Response({'error':"You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "You don't have permission."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        language = request.data.get("language", "EN-US")
         chapter = Chapter.objects.filter(book_id=book_id).last()
         if not chapter:
             elements = ElementsSerializer(book)
             chapter_num = 0
             result = prologue_generator(elements.data)
-            serializer = ChapterSerializer(
-                data={"content": result["prologue"], "book_id": book_id}
-            )
+            content = result["prologue"]
         else:
             summary = request.data.get("summary")
             if not summary:
@@ -102,20 +117,38 @@ class BookDetailAPIView(APIView):
                 )
             chapter_num = chapter.chapter_num
             result = summary_generator(chapter_num, summary)
-            serializer = ChapterSerializer(
-                data={"content": result["final_summary"], "book_id": book_id}
+            content = result["final_summary"]
+
+        translated_content = translate_summary(content, language)
+        if not translated_content:
+            return Response(
+                {"error": "Translation failed or empty result"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+        serializer = ChapterSerializer(
+            data={
+                "content": translated_content,
+                "book_id": book_id,
+                "chapter_num": chapter_num,
+            }
+        )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             result["book_id"] = book_id
+            result["translated_content"] = translated_content
+            result["chapter_num"] = chapter_num
             return Response(data=result, status=status.HTTP_201_CREATED)
 
     # 글 수정
     def put(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         if book.user_id != request.user:
-            return Response({'error':"You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
-        
+            return Response(
+                {"error": "You don't have permission."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         serializer = BookSerializer(book, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
@@ -126,29 +159,44 @@ class BookDetailAPIView(APIView):
     def delete(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         if book.user_id != request.user:
-            return Response({'error':"You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "You don't have permission."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
         book.delete()
         return Response("No Content", status=204)
 
 
-class TranslateAPIView(APIView):
-    permission_classes=[IsAuthenticated]
-    
-    def post(self, request, book_id):
-        chapter = get_object_or_404(Chapter, book_id=book_id)
-        language = request.data.get("language", "EN-US")
-        summary = chapter.content
-        translated_summary = translate_summary(summary, language)
-        return Response({"translated_summary": translated_summary})
+class DeletePrologueAPIView(APIView):
+    def delete(self, request, book_id):
+        prologue = Chapter.objects.filter(chapter_num=0, book_id=book_id)
+        prologue.delete()
+        return Response("Prologue deleted successfully", status=204)
 
 
 class BookLikeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+        like_bool = request.user in book.is_liked.all()
+        serializer = BookLikeSerializer(book)
+        return Response(
+            {
+                "like_bool": like_bool,
+                "total_likes": book.total_likes(),
+                "book": serializer.data,
+            },
+            status=200,
+        )
+
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         if book.user_id != request.user:
-            return Response({'error':"You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "You don't have permission."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
         like_bool = False
         # 좋아요 삭제
         if request.user in book.is_liked.all():
@@ -180,6 +228,18 @@ class UserLikedBooksAPIView(APIView):
         return Response(serializer.data, status=200)
 
 
+class UserBooksAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        user_books = (
+            user.books.all()
+        )  # 역참조를 이용해 사용자가 작성한 책 리스트를 가져옴
+        serializer = BookSerializer(user_books, many=True)
+        return Response(serializer.data, status=200)
+
+
 class RatingAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -194,7 +254,10 @@ class RatingAPIView(APIView):
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         if book.user_id != request.user:
-            return Response({'error':"You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "You don't have permission."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
         rating = request.data.get("rating")
 
         if rating not in [1, 2, 3, 4, 5]:
@@ -214,8 +277,8 @@ class RatingAPIView(APIView):
 
 
 class CommentListAPIView(APIView):
-    permission_classes=[IsAuthenticated]
-    
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         comments = book.comments.all()
@@ -231,12 +294,15 @@ class CommentListAPIView(APIView):
 
 
 class CommentDetailAPIView(APIView):
-    permission_classes=[IsAuthenticated]
-    
+    permission_classes = [IsAuthenticated]
+
     def put(self, request, book_id, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
         if comment.user_id != request.user:
-            return Response({'error':"You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "You don't have permission."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
         serializer = CommentSerializer(comment, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
@@ -245,6 +311,9 @@ class CommentDetailAPIView(APIView):
     def delete(self, request, book_id, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
         if comment.user_id != request.user:
-            return Response({'error':"You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "You don't have permission."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
         comment.delete()
         return Response("NO comment", status=204)
