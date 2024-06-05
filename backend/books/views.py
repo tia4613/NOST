@@ -68,10 +68,6 @@ class DALL_EImageAPIView(APIView):
 
         serializer = BookSerializer(instance=book)
         return Response(serializer.data, status = 200)
-        # image_url = response.data[0].url
-        # return Response({"image_url": image_url})
-
-        
 
 class BookDetailAPIView(APIView):
     # 상세 조회
