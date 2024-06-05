@@ -33,19 +33,28 @@ class ProfileAPIView(APIView):
 
     def delete(self, request, *args, **kwargs):
         user = self.request.user
+        password = request.data.get("password")
+        refresh_token = request.data.get("refresh_token")
+
+        if not password:
+            return Response(
+                {"message": "비밀번호가 제공되지 않았습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not user.check_password(password):
+            return Response(
+                {"message": "비밀번호가 일치하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
-            refresh_token = request.data.get("refresh_token")
             if refresh_token:
                 token = RefreshToken(refresh_token)
                 token.blacklist()
-            else:
-                return Response(
-                    {"message": "refresh_token이 제공되지 않았습니다."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
         except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "토큰 블랙리스트 처리 중 오류 발생"}, status=status.HTTP_400_BAD_REQUEST)
+
 
         try:
             # 사용자 비활성화

@@ -66,7 +66,7 @@ class DALL_EImageAPIView(APIView):
         book.image = ContentFile(res.content, name = f'{book.title}.png')
         book.save()
 
-        serializer = BookSerializer(instance=book)
+        serializer = BookSerializer(instance=book, context={'request': request})
         return Response(serializer.data, status = 200)
 
 class BookDetailAPIView(APIView):
