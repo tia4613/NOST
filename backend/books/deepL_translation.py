@@ -6,7 +6,6 @@ def translate_summary(content, language) :
     
     auth_key = settings.DEEPL_API_KEY
     translator = deepl.Translator(auth_key)
-
     if isinstance(content,dict) : #data 값이 dict 형태일때 번역
         translated_data = {}
         for key,value in content.items() :

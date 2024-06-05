@@ -122,6 +122,7 @@ class BookDetailAPIView(APIView):
             serializer.save()
             result["book_id"] = book_id
             result["translated_content"] = translated_content
+            result["chapter_num"] = chapter_num
             return Response(data=result, status=status.HTTP_201_CREATED)
 
     # 글 수정
@@ -142,7 +143,7 @@ class BookDetailAPIView(APIView):
 
 class DeletePrologueAPIView(APIView) :
     def delete(self, request, book_id) :
-        prologue = Chapter.objects.filter(chapter=0, book_id = book_id)
+        prologue = Chapter.objects.filter(chapter_num=0, book_id = book_id)
         prologue.delete()
         return Response("Prologue deleted successfully", status=204)
         

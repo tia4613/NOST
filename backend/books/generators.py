@@ -22,7 +22,7 @@ def elements_generator(user_prompt):
 
     examples = [
         {
-            "user_prompt": "Recommend the best synopsis for me. The time period setting is futuristic, the genre is romantic thriller, with detailed worldbuilding and a social, dark adult tone, and the characters should be described in a tense, emotional tone: a synthetic human rights advocate struggling to raise her two daughters after her death, a seasoned detective and journalist exposing discrimination against synthetics",
+            "user_prompt": "",
             "answer": """
                 Title: The Wounded Ones
                 Genre: Romantic Thriller
@@ -247,9 +247,19 @@ def summary_generator(chapter_num, summary):
         "writes endings where the protagonist wraps up the case, all conflicts are resolved, and the story ends.",
     ]  # 발단, 전개, 위기, 절정, 결말
 
-    current_stage = stage[chapter_num // 2]
-    next_stage = stage[chapter_num // 2 + 1]
+    current_stage, next_stage = None, None
 
+    for i in range(5) :
+        if (chapter_num-1)//6 == i :
+            current_stage = stage[i]
+            if chapter_num % 6 == 0 :
+                next_stage = stage[i+1]
+            elif chapter_num == 30 :    
+
+                next_stage = None
+            else :    
+                next_stage = stage[i]
+        
     summary_template = ChatPromptTemplate.from_messages(
         [
             (
@@ -265,24 +275,24 @@ def summary_generator(chapter_num, summary):
             ("human", "{prompt}"),
         ]
     )
-
-    recommend_template = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                """
-            You are an experienced novelist who {next_stage}. 
-            Based on the current summary prompt, provide three compelling recommendations for the next part of the summary.
-            Your recommendations should highlight each of the starkly emotional and realistic choices: hope, tragedy, despair, depression, and enjoyment.
-            Be extremely contextual and realistic with your recommendations. 
-            Each recommendation should have 'Title': 'Description'. For example: 'Title': 'The Beginning of a Tragedy','Description': 'The people are kind to the new doctor in town, but under the guise of healing their wounds, the doctor slowly conducts experiments.' 
-            The response format is exactly the same as the frames in the example.
-            """,
-            ),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{current_story}"),
-        ]
-    )
+    if chapter_num <= 29:
+        recommend_template = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """
+                You are an experienced novelist who {next_stage}. 
+                Based on the current summary prompt, provide three compelling recommendations for the next part of the summary.
+                Your recommendations should highlight each of the starkly emotional and realistic choices: hope, tragedy, despair, depression, and enjoyment.
+                Be extremely contextual and realistic with your recommendations. 
+                Each recommendation should have 'Title': 'Description'. For example: 'Title': 'The Beginning of a Tragedy','Description': 'The people are kind to the new doctor in town, but under the guise of healing their wounds, the doctor slowly conducts experiments.' 
+                The response format is exactly the same as the frames in the example.
+                """,
+                ),
+                MessagesPlaceholder(variable_name="chat_history"),
+                ("human", "{current_story}"),
+            ]
+        )
 
     def load_memory():
         return memory.load_memory_variables({})["chat_history"]
