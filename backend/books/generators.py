@@ -255,7 +255,6 @@ def summary_generator(chapter_num, summary):
             if chapter_num % 6 == 0 :
                 next_stage = stage[i+1]
             elif chapter_num == 30 :    
-
                 next_stage = None
             else :    
                 next_stage = stage[i]
@@ -325,13 +324,16 @@ def summary_generator(chapter_num, summary):
         return recommendations
 
     def generate_recommendations(chat_history, current_story, next_stage):
-        formatted_recommendation_prompt = recommend_template.format(
-            chat_history=chat_history,
-            current_story=current_story,
-            next_stage=next_stage,
-        )
-        recommendation_result = llm.invoke(formatted_recommendation_prompt)
-        recommendations = parse_recommendations(recommendation_result.content)
+        if recommend_template:
+            formatted_recommendation_prompt = recommend_template.format(
+                chat_history=chat_history,
+                current_story=current_story,
+                next_stage=next_stage,
+            )
+            recommendation_result = llm.invoke(formatted_recommendation_prompt)
+            recommendations = parse_recommendations(recommendation_result.content)
+        else:
+            recommendations = None
         return recommendations
 
     def remove_recommendation_paths(final_summary):
@@ -353,7 +355,10 @@ def summary_generator(chapter_num, summary):
     memory.save_context({"input": prompt}, {"output": result.content})
 
     cleaned_story = remove_recommendation_paths(result.content)
-    recommendations = generate_recommendations(
-        chat_history, result.content, next_stage)
+    if chapter_num <= 29:
+        recommendations = generate_recommendations(
+            chat_history, result.content, next_stage)
 
-    return {"final_summary": cleaned_story, "recommendations": recommendations}
+        return {"final_summary": cleaned_story, "recommendations": recommendations}
+    else:
+        return {"final_summary": cleaned_story, "recommendations": None}

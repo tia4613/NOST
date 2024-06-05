@@ -170,7 +170,18 @@ class BookLikeAPIView(APIView):
             },
             status=200,
         )
-
+    def get(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+        like_bool = request.user in book.is_liked.all()
+        serializer = BookLikeSerializer(book)
+        return Response(
+            {
+                "like_bool": like_bool,
+                "total_likes": book.total_likes(),
+                "book": serializer.data,
+            },
+            status=200,
+        )
 
 class UserLikedBooksAPIView(APIView):
     permission_classes = [IsAuthenticated]
