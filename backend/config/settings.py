@@ -106,7 +106,7 @@ DATABASES = {
 # DATABASES = {
 #     "default": {
 #         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "nost",
+#         "NAME": os.getenv("POSTGRESQL_NAME"),
 #         "HOST": "localhost",
 #         "PORT": "5432",
 #         "USER": os.getenv("POSTGRESQL_USER"),
