@@ -123,6 +123,7 @@ class BookDetailAPIView(APIView):
                 )
             chapter_num = chapter.chapter_num
             result = summary_generator(chapter_num, summary)
+            chapter_num += 1
             content = result["final_summary"]
 
         translated_content = translate_summary(content, language)
@@ -136,7 +137,6 @@ class BookDetailAPIView(APIView):
             data={
                 "content": translated_content,
                 "book_id": book_id,
-                "chapter_num": chapter_num,
             }
         )
         if serializer.is_valid(raise_exception=True):
