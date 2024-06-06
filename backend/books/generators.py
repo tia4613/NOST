@@ -37,7 +37,7 @@ def elements_generator(user_prompt):
             """,
         },
         {
-            "user_prompt": "",  # 예시 넣어야 함
+            "user_prompt": "",
             "answer": """
                 Title: Project-elven001
                 Genre: Thriller, Science Fiction
