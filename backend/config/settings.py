@@ -102,6 +102,17 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+# postgresql 사용시
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "nost",
+#         "HOST": "localhost",
+#         "PORT": "5432",
+#         "USER": os.getenv("POSTGRESQL_USER"),
+#         "PASSWORD": os.getenv("POSTGRESQL_PASSWORD"),
+#     }
+# }
 
 # CORS
 CORS_ORIGIN_WHITELIST = [
@@ -171,7 +182,7 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "Nost - "
-EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
+EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/"
 
 ACCOUNT_ADAPTER = "accounts.adapters.CustomUserAccountAdapter"
 
