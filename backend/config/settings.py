@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import os
+import secret
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,14 +23,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
+SECRET_KEY = secret.SECRET_KEY
+OPENAI_API_KEY = secret.OPENAI_API_KEY
+DEEPL_API_KEY = secret.DEEPL_API_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    os.getenv("AWS_IP"),
+    secret.AWS_IP,
     "127.0.0.1",
     "localhost",
 ]
@@ -113,11 +114,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRESQL_NAME"),
+        "NAME": secret.POSTGRESQL_NAME,
         "HOST": "localhost",
         "PORT": "5432",
-        "USER": os.getenv("POSTGRESQL_USER"),
-        "PASSWORD": os.getenv("POSTGRESQL_PASSWORD"),
+        "USER": secret.POSTGRESQL_USER,
+        "PASSWORD": secret.POSTGRESQL_PASSWORD,
     }
 }
 
@@ -125,6 +126,7 @@ DATABASES = {
 CORS_ORIGIN_WHITELIST = [
     "http://127.0.0.1:8000",
     "http://localhost:3000",
+    "http://" + secret.AWS_IP,
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -162,7 +164,7 @@ AUTHENTICATION_BACKENDS = [
 # jwt
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=6),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
@@ -176,8 +178,8 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = "587"
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_HOST_USER = secret.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = secret.EMAIL_HOST_PASSWORD
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # allauth
@@ -242,6 +244,7 @@ AUTH_PASSWORD_VALIDATORS = [
 CORS_ORIGIN_WHITELIST = [
     "http://127.0.0.1:8000",
     "http://localhost:3000",
+    "http://" + secret.AWS_IP,
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -257,15 +260,18 @@ USE_I18N = True
 
 USE_TZ = True
 
-USE_S3=os.getenv('USE_S3')=='True'
+USE_S3 = secret.USE_S3
 
 if USE_S3:
     # AWS
-    AWS_ACCESS_KEY_ID = os.getenv("MY_AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = os.getenv("MY_AWS_SECRET_ACCESS_KEY")
+    AWS_ACCESS_KEY_ID = secret.MY_AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY = secret.MY_AWS_SECRET_ACCESS_KEY
     AWS_REGION = "ap-northeast-2"
     AWS_STORAGE_BUCKET_NAME = "mynostbucket"
-    AWS_S3_CUSTOM_DOMAIN = "%s.s3.%s.amazonaws.com" % (AWS_STORAGE_BUCKET_NAME, AWS_REGION)
+    AWS_S3_CUSTOM_DOMAIN = "%s.s3.%s.amazonaws.com" % (
+        AWS_STORAGE_BUCKET_NAME,
+        AWS_REGION,
+    )
     AWS_S3_OBJECT_PARAMETERS = {
         "CacheControl": "max-age=86400",
     }
@@ -274,22 +280,22 @@ if USE_S3:
     STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_LOCATION)
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-    
-    # S3 static settings
-    STATIC_LOCATION = 'static'
-    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/'
-    STATICFILES_STORAGE = 'mynostbucket.storage_backends.StaticStorage'
-    # s3 public media settings
-    PUBLIC_MEDIA_LOCATION = 'media'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
-    DEFAULT_FILE_STORAGE = 'mynostbucket.storage_backends.PublicMediaStorage'
-else:
-    STATIC_URL = '/staticfiles/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    MEDIA_URL = '/mediafiles/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+    # S3 static settings
+    STATIC_LOCATION = "static"
+    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
+    STATICFILES_STORAGE = "mynostbucket.storage_backends.StaticStorage"
+    # s3 public media settings
+    PUBLIC_MEDIA_LOCATION = "media"
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
+    DEFAULT_FILE_STORAGE = "mynostbucket.storage_backends.PublicMediaStorage"
+else:
+    STATIC_URL = "/staticfiles/"
+    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+    MEDIA_URL = "/mediafiles/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
+
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
