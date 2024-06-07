@@ -17,7 +17,7 @@ class BookSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_average_rating(self, book):
-        return Rating.objects.filter(book=book).aggregate(Avg("rating"))["rating__avg"]
+        return round(Rating.objects.filter(book=book).aggregate(Avg("rating"))["rating__avg"],1)
 
     def get_user_nickname(self, book):
         return book.user_id.nickname
