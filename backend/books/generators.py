@@ -1,4 +1,3 @@
-import os
 import logging
 import re
 import json
@@ -10,12 +9,13 @@ from langchain.prompts import (
     FewShotChatMessagePromptTemplate,
 )
 from langchain.schema.runnable import RunnablePassthrough
+from config import secret
 
 
 def elements_generator(user_prompt):
     llm = ChatOpenAI(
         model="gpt-3.5-turbo",
-        api_key=os.getenv("OPENAI_API_KEY"),
+        api_key=secret.OPENAI_API_KEY,
         max_tokens=800,
         temperature=1.2,
     )
@@ -148,7 +148,7 @@ def prologue_generator(elements):
 
     llm = ChatOpenAI(
         model="gpt-3.5-turbo",
-        api_key=os.getenv("OPENAI_API_KEY"),
+        api_key=secret.OPENAI_API_KEY,
         max_tokens=800,
         temperature=1.2,
     )
@@ -232,7 +232,7 @@ def prologue_generator(elements):
 
 def summary_generator(chapter_num, summary):
     llm = ChatOpenAI(
-        model="gpt-3.5-turbo", api_key=os.getenv("OPENAI_API_KEY"), temperature=1.2
+        model="gpt-3.5-turbo", api_key=secret.OPENAI_API_KEY, temperature=1.2
     )
 
     memory = ConversationSummaryBufferMemory(
