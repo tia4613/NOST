@@ -26,12 +26,12 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
 # 미디어 파일을 위한 스토리지 설정
-DFFAULT_FILE_STORAGE='config.asset_storage.MediaStorage'
+DFFAULT_FILE_STORAGE = "config.asset_storage.MediaStorage"
 
 # Application definition
 
@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "corsheaders",
-    'storages', # s3업로드를 위해 storages를 apps에 추가
+    "storages",  # s3업로드를 위해 storages를 apps에 추가
     # Custom
     "accounts",
     "books",
@@ -269,19 +269,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # AWS
-AWS_ACCESS_KEY_ID=os.getenv('MY_AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('MY_AWS_SECRET_ACCESS_KEY')
-AWS_REGION = 'ap-northeast-2'
-AWS_STORAGE_BUCKET_NAME = 'mynostbucket'
-AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (
-    AWS_STORAGE_BUCKET_NAME, AWS_REGION)
+AWS_ACCESS_KEY_ID = os.getenv("MY_AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("MY_AWS_SECRET_ACCESS_KEY")
+AWS_REGION = "ap-northeast-2"
+AWS_STORAGE_BUCKET_NAME = "mynostbucket"
+AWS_S3_CUSTOM_DOMAIN = "%s.s3.%s.amazonaws.com" % (AWS_STORAGE_BUCKET_NAME, AWS_REGION)
 AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
+    "CacheControl": "max-age=86400",
 }
-AWS_DEFAULT_ACL = 'public-read'
-AWS_LOCATION = 'static'
-STATIC_URL = 'https://%s/%s/' % (AWS_S3_CUSTOM_DOMAIN, AWS_LOCATION)
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static')
-]
+AWS_DEFAULT_ACL = "public-read"
+AWS_LOCATION = "static"
+STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_LOCATION)
+STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
