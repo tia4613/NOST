@@ -25,6 +25,12 @@ class BookSerializer(serializers.ModelSerializer):
 
     def get_chapters(self,book) :
         return book.full_text.content
+    
+    def get_image_url(self,obj) :
+        request = self.context.get('request')
+        if obj.image : 
+            return request.build_absolute_uri(obj.image.url)
+        return None
 
     def get_image_url(self, obj):
         request = self.context.get('request')
