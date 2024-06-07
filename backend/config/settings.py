@@ -30,6 +30,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# 미디어 파일을 위한 스토리지 설정
+DFFAULT_FILE_STORAGE='config.asset_storage.MediaStorage'
 
 # Application definition
 
@@ -52,6 +54,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "corsheaders",
+    'storages', # s3업로드를 위해 storages를 apps에 추가
     # Custom
     "accounts",
     "books",
@@ -96,23 +99,23 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-# postgresql 사용시
 # DATABASES = {
 #     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.getenv("POSTGRESQL_NAME"),
-#         "HOST": "localhost",
-#         "PORT": "5432",
-#         "USER": os.getenv("POSTGRESQL_USER"),
-#         "PASSWORD": os.getenv("POSTGRESQL_PASSWORD"),
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
 #     }
 # }
+# postgresql 사용시
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRESQL_NAME"),
+        "HOST": "localhost",
+        "PORT": "5432",
+        "USER": os.getenv("POSTGRESQL_USER"),
+        "PASSWORD": os.getenv("POSTGRESQL_PASSWORD"),
+    }
+}
 
 # CORS
 CORS_ORIGIN_WHITELIST = [
@@ -264,3 +267,21 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# AWS
+AWS_ACCESS_KEY_ID=os.getenv('MY_AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('MY_AWS_SECRET_ACCESS_KEY')
+AWS_REGION = 'ap-northeast-2'
+AWS_STORAGE_BUCKET_NAME = 'mynostbucket'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (
+    AWS_STORAGE_BUCKET_NAME, AWS_REGION)
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_DEFAULT_ACL = 'public-read'
+AWS_LOCATION = 'static'
+STATIC_URL = 'https://%s/%s/' % (AWS_S3_CUSTOM_DOMAIN, AWS_LOCATION)
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
