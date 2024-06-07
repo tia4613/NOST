@@ -114,7 +114,7 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("POSTGRESQL_NAME"),
-        "HOST": "localhost",
+        "HOST": os.getenv('AWS_IP'),
         "PORT": "5432",
         "USER": os.getenv("POSTGRESQL_USER"),
         "PASSWORD": os.getenv("POSTGRESQL_PASSWORD"),
