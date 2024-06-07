@@ -21,7 +21,7 @@ from .deepL_translation import translate_summary
 
 
 class BookListAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     # 전체 목록 조회
     def get(self, request):
@@ -54,7 +54,7 @@ class BookListAPIView(APIView):
 
 
 class DALL_EImageAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def post(self, request, book_id):
         client = OpenAI()
@@ -80,7 +80,7 @@ class DALL_EImageAPIView(APIView):
 
 
 class BookDetailAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     # 상세 조회
     def get(self, request, book_id):
