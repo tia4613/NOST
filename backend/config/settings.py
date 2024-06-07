@@ -29,7 +29,7 @@ DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    os.getenv('AWS_IP'),
+    os.getenv("AWS_IP"),
     "127.0.0.1",
     "localhost",
 ]
@@ -276,6 +276,7 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "static"
 
 # Media files
 MEDIA_URL = "/media/"
