@@ -13,10 +13,9 @@ dataclasses-json==0.6.6
 debugpy==1.8.1
 decorator==5.1.1
 deepl==1.18.0
-deepl.py==1.0.3
 distro==1.9.0
 git+https://github.com/Juunsik/dj-rest-auth.git@ba3ac4d64d3aa099d833a688ba490d959552f3df
-Django==4.2
+django==4.2
 django-allauth==0.62.1
 django-cors-headers==4.3.1
 django-dotenv==1.4.2
