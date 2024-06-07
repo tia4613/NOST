@@ -282,9 +282,9 @@ if USE_S3:
     STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
     # S3 static settings
-    STATIC_LOCATION = "static"
-    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
-    STATICFILES_STORAGE = "mynostbucket.storage_backends.StaticStorage"
+    # STATIC_LOCATION = "static"
+    # STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
+    # STATICFILES_STORAGE = "mynostbucket.storage_backends.StaticStorage"
     # s3 public media settings
     PUBLIC_MEDIA_LOCATION = "media"
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
@@ -294,8 +294,7 @@ else:
     STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
     MEDIA_URL = "/mediafiles/"
     MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
-
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+    STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
