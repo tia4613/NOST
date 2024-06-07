@@ -16,7 +16,7 @@ class ConfirmEmailView(APIView):
         self.object = confirmation = self.get_object()
         confirmation.confirm(self.request)
         # A React Router Route will handle the failure scenario
-        return HttpResponseRedirect("/login/success/")
+        return HttpResponseRedirect(self.get_main_url())
 
     def get_object(self, queryset=None):
         key = self.kwargs["key"]
@@ -28,13 +28,16 @@ class ConfirmEmailView(APIView):
                 email_confirmation = queryset.get(key=key.lower())
             except EmailConfirmation.DoesNotExist:
                 # A React Router Route will handle the failure scenario
-                return HttpResponseRedirect("/login/failure/")
+                return HttpResponseRedirect(self.get_main_url())
         return email_confirmation
 
     def get_queryset(self):
         qs = EmailConfirmation.objects.all_valid()
         qs = qs.select_related("email_address__user")
         return qs
+
+    def get_main_url(self):
+        return "https://novel-stella.com/"
 
 
 class ProfileAPIView(APIView):
@@ -79,8 +82,10 @@ class ProfileAPIView(APIView):
                 token = RefreshToken(refresh_token)
                 token.blacklist()
         except Exception as e:
-            return Response({"message": "토큰 블랙리스트 처리 중 오류 발생"}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response(
+                {"message": "토큰 블랙리스트 처리 중 오류 발생"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             # 사용자 비활성화
