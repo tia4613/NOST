@@ -18,6 +18,7 @@ from django.core import serializers
 from django.core.files.base import ContentFile
 from .generators import elements_generator, prologue_generator, summary_generator
 from .deepL_translation import translate_summary
+from config import secret
 
 
 class BookListAPIView(APIView):
@@ -57,7 +58,7 @@ class DALL_EImageAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def post(self, request, book_id):
-        client = OpenAI()
+        client = OpenAI(api_key=secret.OPENAI_API_KEY)
         book = get_object_or_404(Book, id=book_id)
         if book.user_id is not request.user:
             return Response(
