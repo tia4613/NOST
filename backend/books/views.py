@@ -60,7 +60,7 @@ class DALL_EImageAPIView(APIView):
     def post(self, request, book_id):
         client = OpenAI(api_key=secret.OPENAI_API_KEY)
         book = get_object_or_404(Book, id=book_id)
-        if book.user_id is not request.user:
+        if book.user_id != request.user:
             return Response(
                 {"error": "You don't have permission."},
                 status=status.HTTP_401_UNAUTHORIZED,
