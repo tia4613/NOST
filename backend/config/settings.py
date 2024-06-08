@@ -36,7 +36,7 @@ ALLOWED_HOSTS = [
 ]
 
 # 미디어 파일을 위한 스토리지 설정
-DFFAULT_FILE_STORAGE = "config.asset_storage.MediaStorage"
+# DFFAULT_FILE_STORAGE = "config.asset_storage.MediaStorage"
 
 # Application definition
 
