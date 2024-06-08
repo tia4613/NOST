@@ -260,41 +260,21 @@ USE_I18N = True
 
 USE_TZ = True
 
-USE_S3 = secret.USE_S3
 
-if USE_S3:
-    # AWS
-    AWS_ACCESS_KEY_ID = secret.MY_AWS_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY = secret.MY_AWS_SECRET_ACCESS_KEY
-    AWS_REGION = "ap-northeast-2"
-    AWS_STORAGE_BUCKET_NAME = "mynostbucket"
-    AWS_S3_CUSTOM_DOMAIN = "%s.s3.%s.amazonaws.com" % (
-        AWS_STORAGE_BUCKET_NAME,
-        AWS_REGION,
-    )
-    AWS_S3_OBJECT_PARAMETERS = {
-        "CacheControl": "max-age=86400",
-    }
-    AWS_DEFAULT_ACL = "public-read"
-    AWS_LOCATION = "static"
-    STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_LOCATION)
+# AWS Setting
+AWS_REGION = "ap-northeast-2" #AWS서버의 지역
+AWS_STORAGE_BUCKET_NAME = "mynostbucket" #생성한 버킷 이름
+AWS_ACCESS_KEY_ID = secret.MY_AWS_ACCESS_KEY_ID #액서스 키 ID
+AWS_SECRET_ACCESS_KEY = secret.MY_AWS_SECRET_ACCESS_KEY #액서스 키 PW
+#버킷이름.s3.AWS서버지역.amazonaws.com 형식
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME, AWS_REGION)
+# Static Setting
+STATIC_URL = "https://%s/static/" % AWS_S3_CUSTOM_DOMAIN
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# Media Setting
 
-    # S3 static settings
-    # STATIC_LOCATION = "static"
-    # STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
-    # STATICFILES_STORAGE = "mynostbucket.storage_backends.StaticStorage"
-    # s3 public media settings
-    PUBLIC_MEDIA_LOCATION = "media"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-else:
-    STATIC_URL = "/staticfiles/"
-    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-    MEDIA_URL = "/mediafiles/"
-    MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
-    
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+MEDIA_URL = "https://%s/meida/" % AWS_S3_CUSTOM_DOMAIN
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
