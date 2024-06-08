@@ -11,7 +11,7 @@ class Book(models.Model):
     tone = models.CharField(max_length=255)
     setting = models.CharField(max_length=500)
     characters = models.TextField()
-    image = models.ImageField(upload_to='media',null=True,blank=True)
+    image = models.ImageField(upload_to='',null=True,blank=True)
     full_text = models.TextField(blank=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
