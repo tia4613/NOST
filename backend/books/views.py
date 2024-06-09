@@ -95,6 +95,7 @@ class BookDetailAPIView(APIView):
         response_data["chapters"] = chapter_serializer.data
         return Response(response_data, status=200)
 
+
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         if book.user_id != request.user:
