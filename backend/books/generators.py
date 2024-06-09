@@ -2,6 +2,8 @@ import os
 import logging
 import re
 import json
+import time
+from .deepL_translation import translate_summary
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain_openai import ChatOpenAI
 from langchain.prompts import (
@@ -17,7 +19,7 @@ def elements_generator(user_prompt):
         model="gpt-3.5-turbo",
         api_key=os.getenv("OPENAI_API_KEY"),
         max_tokens=800,
-        temperature=1.2,
+        temperature=0.8,
     )
 
     examples = [
@@ -149,8 +151,8 @@ def prologue_generator(elements):
     llm = ChatOpenAI(
         model="gpt-3.5-turbo",
         api_key=os.getenv("OPENAI_API_KEY"),
-        max_tokens=800,
-        temperature=1.2,
+        max_tokens=400,
+        temperature=0.9,
     )
 
     examples = [
@@ -164,11 +166,8 @@ def prologue_generator(elements):
                 "characters": "Princess Elara: A kind-hearted and strong-willed princess who must navigate court politics and challenges to find true love and her own path. Prince Aldric: The brave and chivalrous prince from a neighboring kingdom, determined to win Princess Elara's heart and unite their kingdoms through love. Queen Isadora: Elara's regal and wise mother, who navigates the intrigues of court life while guiding her daughter through the challenges of royal duties and romance."
             """,
             "answer": """
-                Prologue: 
-                The Kingdom of Avaloria lay bathed in the soft hues of dawn, a land steeped in tales of chivalry and courtly love. Within the stone walls of the castle, Princess Elara gazed out of her window, her mind heavy with the weight of her impending responsibilities. As the heir to the throne, she knew that her duty to her kingdom often overshadowed the desires of her own heart.
-                In a neighboring kingdom, Prince Aldric prepared for his journey to Avaloria, his resolve unwavering as he sought to win the hand of Princess Elara. Their union was not just a matter of love but a beacon of hope for the two realms, a treaty sealed in the chambers of the heart.
-                Meanwhile, Queen Isadora wandered the halls of the castle, her regal posture belying the concerns that knotted her brow. She had seen love kindle empires or extinguish them in a single breath. As the guiding light in her daughter's life, she vowed to protect Elara from the shadows that lurked within the castle walls.
-                And so, against the backdrop of courtly intrigue and whispered secrets, the fates of Princess Elara, Prince Aldric, and Queen Isadora intertwined, bound by a destiny that only love, courage, and resilience could shape.
+                Prologue:
+                The grand ballroom of the Ashford Manor was ablaze with candlelight, casting a warm glow over the assembled guests. The year was 1812, and the Regency era was in full swing. Ladies in exquisite gowns of silk and lace glided gracefully across the polished wooden floors, their laughter a soft murmur that blended with the strains of a delicate waltz played by the string quartet...Lady Eleanor Ashford, the eldest daughter of the Duke, stood at the edge of the room, her emerald eyes scanning the crowd. She wore a gown of deep burgundy, the color accentuating her fair complexion and the dark curls cascading down her back. Her heart raced as she spotted the tall, broad-shouldered figure of Lord Thomas Hamilton across the room...Thomas, the second son of the Earl of Westwood, had returned from the war just weeks earlier, his presence a welcome surprise to the ton. He was handsome, with dark hair and piercing blue eyes that seemed to hold a world of secrets. As their eyes met, a spark of recognition and longing passed between them, igniting an unspoken connection that neither could deny.
             """,
         },
     ]
@@ -207,7 +206,6 @@ def prologue_generator(elements):
 
     prologue = prologue_chain.invoke({"setting": elements})
 
-
     result_text = prologue.content.strip()
 
     try:
@@ -230,7 +228,7 @@ def prologue_generator(elements):
         return e
 
 
-def summary_generator(chapter_num, summary):
+def summary_generator(chapter_num, summary, elements, prologue, language):
     llm = ChatOpenAI(
         model="gpt-3.5-turbo", api_key=os.getenv("OPENAI_API_KEY"), temperature=1.2
     )
@@ -239,59 +237,95 @@ def summary_generator(chapter_num, summary):
         llm=llm, max_token_limit=20000, memory_key="chat_history", return_messages=True
     )
 
-    stage = [
+    stages = [
         "writes Expositions that introduce the characters and setting of your novel and where events take place.",
         "writes Development which a series of events leads to conflict between characters.",
         "writes crises, where a reversal of events occurs, a new situation emerges, and the protagonist ultimately fails.",
         "writes a climax in which a solution to a new situation is realized, the protagonist implements it, and the conflict shifts.",
         "writes endings where the protagonist wraps up the case, all conflicts are resolved, and the story ends.",
-    ]  # 발단, 전개, 위기, 절정, 결말
+    ]
 
     current_stage, next_stage = None, None
 
-    for i in range(5) :
-        if (chapter_num-1)//6 == i :
-            current_stage = stage[i]
-            if chapter_num % 6 == 0 :
-                next_stage = stage[i+1]
-            elif chapter_num == 30 :    
-                next_stage = None
-            else :    
-                next_stage = stage[i]
-        
+    for i in range(5):
+        if (chapter_num-1)//6 == i:
+            current_stage = stages[i]
+            next_stage = stages[i+1] if chapter_num % 6 == 0 and i + \
+                1 < len(stages) else stages[i]
+
+    example_prompts = [
+        {
+            "summary": "Write a concise summary of the first chapter where the protagonist meets a mysterious informant.",
+            "answer": """
+                James Worthington prowled the fog-drenched streets of Victorian London. A note directed him to a secluded meeting. As he approached, a man in a long, dark coat emerged from the mist. The informant's voice was urgent: "They're watching, detective." He handed over a ledger filled with cryptic entries, urging James to uncover the truth before disappearing into the fog.
+            """
+        },
+        {
+            "summary": "Write a concise summary of the chapter where the protagonist faces their first major obstacle.",
+            "answer": """
+                James's investigation led him to Lord Blackwood's mansion. Disguised as a social call, he navigated the grand halls to find crucial evidence. As he rifled through drawers, Lord Blackwood entered. "What are you doing here, Worthington?" A tense exchange ensued, and James narrowly escaped, realizing Blackwood was onto him.
+            """
+        },
+        {
+            "summary": "Write a concise summary of the chapter where the protagonist discovers a shocking secret.",
+            "answer": """
+                In an abandoned library, James found letters from his late father, revealing a link to a criminal syndicate. The final letter detailed his father's regret and attempt to escape the syndicate. This revelation shook James, fueling his determination to bring the truth to light.
+            """
+        },
+        {
+            "summary": "Write a concise summary of the chapter where the protagonist forms an unexpected alliance.",
+            "answer": """
+                In a seedy tavern, James met Lila, a master thief. Initially tense, they formed an uneasy alliance. Lila's underworld knowledge and James's quest for truth aligned, and they planned to infiltrate the syndicate's stronghold together.
+            """
+        }
+    ]
+
+    example_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("human", "{summary}"),
+            ("ai", "{answer}"),
+        ]
+    )
+
+    example_prompt = FewShotChatMessagePromptTemplate(
+        example_prompt=example_prompt,
+        examples=example_prompts,
+    )
+
     summary_template = ChatPromptTemplate.from_messages(
         [
             (
                 "system",
-                """You are an experienced novelist who {current_stage}. 
-            Write a concise, realistic, and engaging summary based on the provided theme and previous context. 
-            Develop the characters, setting, and plot with rich descriptions. 
-            Ensure the summary flows smoothly, highlighting both hope and despair. 
-            Make the narrative provocative and creative. 
-            Avoid explicit reader interaction prompts or suggested paths.""",
+                f"""You are an experienced novelist who {{current_stage}}.
+                Write a concise, character-focused summary of the next events in the story.
+                Focus on the actions, decisions, and emotions of the characters.
+                Avoid generic descriptions of suspense or tension.
+                Ensure the summary flows smoothly from the prologue and adds new developments.
+                """,
             ),
+            example_prompt,
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{prompt}"),
         ]
     )
-    if chapter_num <= 29:
-        recommend_template = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    """
-                You are an experienced novelist who {next_stage}. 
+
+    recommend_template = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                f"""
+                You are an experienced novelist who {{next_stage}}.
                 Based on the current summary prompt, provide three compelling recommendations for the next part of the summary.
-                Your recommendations should highlight each of the starkly emotional and realistic choices: hope, tragedy, despair, depression, and enjoyment.
-                Be extremely contextual and realistic with your recommendations. 
-                Each recommendation should have 'Title': 'Description'. For example: 'Title': 'The Beginning of a Tragedy','Description': 'The people are kind to the new doctor in town, but under the guise of healing their wounds, the doctor slowly conducts experiments.' 
-                The response format is exactly the same as the frames in the example.
+                Be extremely contextual and realistic with your recommendations.
+                Each recommendation should have 'Title': 'Description'. For example: 'James discovers a hidden clue': 'James finds a hidden compartment in the desk, revealing a map that leads to a secret location.'
+                Limit the length of each description to 1-2 sentences.
                 """,
-                ),
-                MessagesPlaceholder(variable_name="chat_history"),
-                ("human", "{current_story}"),
-            ]
-        )
+            ),
+            example_prompt,
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{current_story}"),
+        ]
+    ) if chapter_num <= 29 else None
 
     def load_memory():
         return memory.load_memory_variables({})["chat_history"]
@@ -323,18 +357,48 @@ def summary_generator(chapter_num, summary):
 
         return recommendations
 
-    def generate_recommendations(chat_history, current_story, next_stage):
-        if recommend_template:
-            formatted_recommendation_prompt = recommend_template.format(
-                chat_history=chat_history,
-                current_story=current_story,
-                next_stage=next_stage,
-            )
-            recommendation_result = llm.invoke(formatted_recommendation_prompt)
-            recommendations = parse_recommendations(recommendation_result.content)
-        else:
-            recommendations = None
-        return recommendations
+    def generate_recommendations(chat_history, current_story, next_stage, language):
+        if not recommend_template:
+            return None
+
+        formatted_recommendation_prompt = recommend_template.format(
+            chat_history=chat_history,
+            current_story=current_story,
+            next_stage=next_stage,
+        )
+        logging.debug(f"Formatted Recommendation Prompt: {
+                      formatted_recommendation_prompt}")
+
+        try:
+            for attempt in range(3):
+                recommendation_result = llm.invoke(
+                    formatted_recommendation_prompt)
+                logging.debug(f"Recommendation Result: {
+                              recommendation_result.content}")
+
+                if recommendation_result.content:
+                    recommendations = parse_recommendations(
+                        recommendation_result.content)
+                    if recommendations:
+                        translated_recommendations = []
+                        for rec in recommendations:
+                            translated_title = translate_summary(
+                                rec["Title"], language)
+                            translated_description = translate_summary(
+                                rec["Description"], language)
+                            translated_recommendations.append({
+                                "Title": translated_title,
+                                "Description": translated_description,
+                            })
+                        return translated_recommendations
+                logging.warning(f"Recommendation attempt {
+                                attempt + 1} failed, retrying...")
+                time.sleep(1)
+
+        except Exception as e:
+            logging.error(f"Error generating recommendations: {e}")
+
+        return None
 
     def remove_recommendation_paths(final_summary):
         pattern = re.compile(r"Recommended summary paths:.*$", re.DOTALL)
@@ -343,22 +407,24 @@ def summary_generator(chapter_num, summary):
 
     chat_history = load_memory()
     prompt = f"""
+    Story Elements: {elements}
+    Prologue: {prologue}
     Story Prompt: {summary}
     Previous Story: {chat_history}
-    Write a concise, realistic, and engaging summary based on the above information. Highlight both hope and despair in the narrative. Make it provocative and creative.
+    Write a concise, realistic, and engaging summary of the next events in the story. Highlight both hope and despair in the narrative. Make it provocative and creative.
+    Ensure the summary continues smoothly from the prologue, without repeating information.
+    Focus on new developments, character arcs, and plot progression.
     """
-
     formatted_final_prompt = summary_template.format(
         chat_history=chat_history, prompt=prompt, current_stage=current_stage
     )
+    logging.debug(f"Formatted Final Prompt: {formatted_final_prompt}")
     result = llm.invoke(formatted_final_prompt)
+    logging.debug(f"Summary Result: {result.content}")
     memory.save_context({"input": prompt}, {"output": result.content})
 
     cleaned_story = remove_recommendation_paths(result.content)
-    if chapter_num <= 29:
-        recommendations = generate_recommendations(
-            chat_history, result.content, next_stage)
-
-        return {"final_summary": cleaned_story, "recommendations": recommendations}
-    else:
-        return {"final_summary": cleaned_story, "recommendations": None}
+    recommendations = generate_recommendations(
+        chat_history, result.content, next_stage, language
+    )
+    return {"final_summary": cleaned_story, "recommendations": recommendations}
