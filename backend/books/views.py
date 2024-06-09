@@ -187,27 +187,30 @@ class BookLikeAPIView(APIView):
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         serializer = BookLikeSerializer(book)
+        is_liked = book.is_liked.filter(id=request.user.id).exists()
         return Response(
             {
                 "total_likes": book.total_likes(),
                 "book": serializer.data,
+                "like_bool": is_liked,
             },
             status=200,
         )
 
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
-        # 좋아요 삭제
         if book.is_liked.filter(id=request.user.id).exists():
             book.is_liked.remove(request.user)
-        # 좋아요 추가
+            like_bool = False
         else:
             book.is_liked.add(request.user)
+            like_bool = True
         serializer = BookLikeSerializer(book)
         return Response(
             {
                 "total_likes": book.total_likes(),
                 "book": serializer.data,
+                "like_bool": like_bool,
             },
             status=200,
         )
