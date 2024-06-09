@@ -73,81 +73,83 @@ class DALL_EImageAPIView(APIView):
             n=1,
         )
         res = requests.get(response.data[0].url)
-        book.image = ContentFile(res.content, name = f'{book.title}.png')
+        book.image = ContentFile(res.content, name=f'{book.title}.png')
         book.save()
 
         serializer = BookSerializer(instance=book)
-        return Response(serializer.data, status = 200)
+        return Response(serializer.data, status=200)
 
 
 class BookDetailAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
-    # 상세 조회
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         ratings = Rating.objects.filter(book=book)
 
-        # chapter 내용들 가져오기
         chapters = Chapter.objects.filter(book_id=book_id)
         chapter_serializer = ChapterSerializer(chapters, many=True)
 
-        # 책 전체 내용 직렬화
         book_serializer = BookSerializer(book)
 
         response_data = book_serializer.data
         response_data["chapters"] = chapter_serializer.data
         return Response(response_data, status=200)
 
-    # chapter(summary) 생성
+
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         if book.user_id != request.user:
-            return Response(
-                {"error": "You don't have permission."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+            return Response({"error": "You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
 
         language = request.data.get("language", "EN-US")
-        chapter = Chapter.objects.filter(book_id=book_id).last()
-        if not chapter:
-            elements = ElementsSerializer(book)
-            chapter_num = 0
-            result = prologue_generator(elements.data)
-            content = result["prologue"]
-        else:
-            summary = request.data.get("summary")
-            if not summary:
-                return Response(
-                    {"error": "Missing summary prompt"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            chapter_num = chapter.chapter_num
-            result = summary_generator(chapter_num, summary)
-            chapter_num += 1
-            content = result["final_summary"]
+        selected_recommendation = request.data.get(
+            "selected_recommendation", None)
 
-        translated_content = translate_summary(content, language)
-        if not translated_content:
-            return Response(
-                {"error": "Translation failed or empty result"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        chapter = Chapter.objects.filter(book_id=book_id).last()
+        elements = ElementsSerializer(book).data
+
+        if not chapter:
+            chapter_num = 0
+            result = prologue_generator(elements)
+            content = result["prologue"]
+            translated_content = translate_summary(content, language)
+        else:
+            if selected_recommendation:
+                summary = f"{selected_recommendation['Title']}: {
+                    selected_recommendation['Description']}"
+            else:
+                summary = request.data.get("summary")
+                if not summary:
+                    return Response({"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST)
+
+            chapter_num = chapter.chapter_num + 1
+            prologue = Chapter.objects.filter(
+                book_id=book_id, chapter_num=0).first()
+            result = summary_generator(
+                chapter_num, summary, elements, prologue.content if prologue else "", language
             )
+            content = result["final_summary"]
+            translated_content = translate_summary(content, language)
 
         serializer = ChapterSerializer(
-            data={
-                "content": translated_content,
-                "book_id": book_id,
-            }
+            data={"content": translated_content,
+                  "book_id": book_id, "chapter_num": chapter_num}
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            result["book_id"] = book_id
-            result["translated_content"] = translated_content
-            result["chapter_num"] = chapter_num
-            return Response(data=result, status=status.HTTP_201_CREATED)
+            response_data = {
+                "book_id": book_id,
+                "translated_content": translated_content,
+                "chapter_num": chapter_num,
+                "recommendations": result.get("recommendations", [])
+            }
+            return Response(data=response_data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # 글 수정
+
     def put(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         if book.user_id != request.user:
@@ -187,27 +189,30 @@ class BookLikeAPIView(APIView):
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         serializer = BookLikeSerializer(book)
+        is_liked = book.is_liked.filter(id=request.user.id).exists()
         return Response(
             {
                 "total_likes": book.total_likes(),
                 "book": serializer.data,
+                "like_bool": is_liked,
             },
             status=200,
         )
 
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
-        # 좋아요 삭제
         if book.is_liked.filter(id=request.user.id).exists():
             book.is_liked.remove(request.user)
-        # 좋아요 추가
+            like_bool = False
         else:
             book.is_liked.add(request.user)
+            like_bool = True
         serializer = BookLikeSerializer(book)
         return Response(
             {
                 "total_likes": book.total_likes(),
                 "book": serializer.data,
+                "like_bool": like_bool,
             },
             status=200,
         )
@@ -242,7 +247,8 @@ class RatingAPIView(APIView):
 
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
-        user_rating = Rating.objects.filter(book=book, user_id=request.user.id).first()
+        user_rating = Rating.objects.filter(
+            book=book, user_id=request.user.id).first()
         if user_rating:
             serializer = RatingSerializer(user_rating)
             return Response(serializer.data, status=200)
@@ -295,7 +301,8 @@ class CommentDetailAPIView(APIView):
                 {"error": "You don't have permission."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-        serializer = CommentSerializer(comment, data=request.data, partial=True)
+        serializer = CommentSerializer(
+            comment, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data)
