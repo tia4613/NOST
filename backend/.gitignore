@@ -169,4 +169,3 @@ pyproject.toml
 !**/migrations/__init__.py
 *.ipynb
 /media/
-secret.py

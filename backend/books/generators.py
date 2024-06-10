@@ -366,13 +366,15 @@ def summary_generator(chapter_num, summary, elements, prologue, language):
             current_story=current_story,
             next_stage=next_stage,
         )
-        logging.debug(f"Formatted Recommendation Prompt: {formatted_recommendation_prompt}")
+        logging.debug(f"Formatted Recommendation Prompt: {
+                      formatted_recommendation_prompt}")
 
         try:
             for attempt in range(3):
                 recommendation_result = llm.invoke(
                     formatted_recommendation_prompt)
-                logging.debug(f"Recommendation Result: {recommendation_result.content}")
+                logging.debug(f"Recommendation Result: {
+                              recommendation_result.content}")
 
                 if recommendation_result.content:
                     recommendations = parse_recommendations(
@@ -389,7 +391,8 @@ def summary_generator(chapter_num, summary, elements, prologue, language):
                                 "Description": translated_description,
                             })
                         return translated_recommendations
-                logging.warning(f"Recommendation attempt {attempt + 1} failed, retrying...")
+                logging.warning(f"Recommendation attempt {
+                                attempt + 1} failed, retrying...")
                 time.sleep(1)
 
         except Exception as e:
