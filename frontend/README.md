@@ -9,14 +9,14 @@ npm start를 사용하여 실행
 
 - `zustand` : 전역상태 관리 라이브러리 (사용자 세션, UI 상태, 폼 데이터 등을 관리하기 위해 Zustand를 사용. 이는 상태 관리의 복잡성을 줄이고, 애플리케이션 상태를 더 쉽게 추적하고 업데이트 할 수있게 합니다.
 
-- Axios : 인터셉터를 사용하여 요청마다 JWT access 토큰을 헤더에 자동으로 추가하고, 응답에서 refresh 토큰을 관리할 수 있다. 브라우저 환경에서 완벽하게 작동하므로, React 와 같은 프론트엔드의 라이브러리에서도 HTTP 요청을 쉽게 관리할 수 있습니다.
+- `Axios` : 인터셉터를 사용하여 요청마다 JWT access 토큰을 헤더에 자동으로 추가하고, 응답에서 refresh 토큰을 관리할 수 있다. 브라우저 환경에서 완벽하게 작동하므로, React 와 같은 프론트엔드의 라이브러리에서도 HTTP 요청을 쉽게 관리할 수 있습니다.
   
-- warning: LF will be replaced by CRLF in (파일경로)The file will have its original line endings in your working directory
+- `warning` : LF will be replaced by CRLF in (파일경로)The file will have its original line endings in your working directory
 위의 에러를 아래의 명령어로 해결 (git config --global core.autocrlf true)
 
-- 로그인,로그아웃 등 AUTH와 관련된 기능들 LoginInstance,AuthInstance,SignupInstance 관리
+- 로그인,로그아웃 등 `AUTH` 와 관련된 기능들 LoginInstance,AuthInstance,SignupInstance 관리
 
-- enter, esc를 사용한 사용자 편의성 추가
+- enter, esc를 사용한 `사용자 편의성` 추가
 
 
 
