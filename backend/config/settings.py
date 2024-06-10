@@ -33,7 +33,7 @@ ALLOWED_HOSTS = [
     secret.AWS_IP,
     "127.0.0.1",
     "localhost",
-    "novel-stella"
+    "novel-stella.com"
 ]
 
 # 미디어 파일을 위한 스토리지 설정
