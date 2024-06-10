@@ -21,8 +21,8 @@
 <summary>프론트엔드</summary>
 <div>
 
-React: 프론트엔드 프레임워크
-Zustand: 상태 관리 라이브러리
+React: 프론트엔드 프레임워크 <br/>
+Zustand: 상태 관리 라이브러리 <br/>
 Cloudflare: CDN 및 보안 서비스
 
 </div>
@@ -32,9 +32,9 @@ Cloudflare: CDN 및 보안 서비스
 <summary>백엔드</summary>
 <div>
 
-Django: 백엔드 프레임워크
-Gunicorn: WSGI HTTP 서버
-PostgreSQL: 데이터베이스 관리 시스템
+Django: 백엔드 프레임워크 <br/>
+Gunicorn: WSGI HTTP 서버 <br/>
+PostgreSQL: 데이터베이스 관리 시스템 <br/>
 Nginx: HTTP 및 리버스 프록시 서버
 
 </div>
@@ -44,8 +44,8 @@ Nginx: HTTP 및 리버스 프록시 서버
 <summary>클라우드 인프라</summary>
 <div>
 
-Amazon EC2: 서버 호스팅
-Amazon S3: 스토리지 서비스
+Amazon EC2: 서버 호스팅 <br/>
+Amazon S3: 스토리지 서비스 <br/>
 
 </div>
 </details>
@@ -54,33 +54,23 @@ Amazon S3: 스토리지 서비스
 <summary>추가 서비스</summary>
 <div>
 
-GitHub: 소스 코드 관리 및 협업 도구
-LangChain: 자연어 처리 라이브러리
-DeepL: 번역 서비스
-ChatGPT: 챗봇 서비스
-DALL-E: 이미지 생성 AI
+GitHub: 소스 코드 관리 및 협업 도구 <br/>
+LangChain: 자연어 처리 라이브러리 <br/>
+DeepL: 번역 서비스 <br/>
+ChatGPT: 챗봇 서비스 <br/>
+DALL-E: 이미지 생성 AI 
 
 </div>
 </details>
 
-
-
-
-
-
-
-
-
+<br/>
 
 # ✅주요 기능
-
-
-
+<br/>
 # FRONTEND
 
 npm install 을 사용해서 node_modules를 설치 후
-
-
+<br/>
 npm start를 사용하여 실행
 
 
@@ -88,6 +78,5 @@ npm start를 사용하여 실행
 
 가상환경을 키고
 python manage.py runserver 사용하여 실행
-
-
+<br/>
 pip freeze > requirements.txt  package
