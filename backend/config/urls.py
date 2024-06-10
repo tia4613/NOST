@@ -20,6 +20,7 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -32,6 +33,16 @@ urlpatterns = [
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger-ui",
     ),
+    path(
+        "login/success/", 
+        TemplateView.as_view(template_name="email_success.html"), 
+        name="login_success"
+        ),
+    path(
+        "login/failure/", 
+        TemplateView.as_view(template_name="email_failure.html"), 
+        name="login_failure"
+        ),
 ]
 
 if settings.DEBUG:
