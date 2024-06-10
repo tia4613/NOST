@@ -12,6 +12,25 @@
 
 # 🗓️개발 기간
 - 24.05.13. ~ 24.06.12.
+<br/>
+# 팀 멤버 구성 🧑‍💻
+
+<br/>
+
+👩‍💻 **프론트엔드**
+
+- 김동환 [@1489ehdghks] (https://github.com/1489ehdghks)
+- 이환희 [@tia4613] (https://github.com/tia4613)
+
+<br/>
+
+👨‍💻 **백엔드**
+
+- 허준혁 [@Juunsik] (https://github.com/Juunsik)
+- 이혜민 [@LeeJS9856] (https://github.com/hy2min)
+
+<br/>
+<br/>
 
 # 🏗️ 서비스 아키텍처
 ![image](https://github.com/1489ehdghks/NOST/assets/159985538/2e302b58-b82c-4cd5-8aba-0421b72836e7)
