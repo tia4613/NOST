@@ -115,8 +115,7 @@ class BookDetailAPIView(APIView):
             translated_content = translate_summary(content, language)
         else:
             if selected_recommendation:
-                summary = f"{selected_recommendation['Title']}: {
-                    selected_recommendation['Description']}"
+                summary = f"{selected_recommendation['Title']}: {selected_recommendation['Description']}"
             else:
                 summary = request.data.get("summary")
                 if not summary:
@@ -132,8 +131,7 @@ class BookDetailAPIView(APIView):
             translated_content = translate_summary(content, language)
 
         serializer = ChapterSerializer(
-            data={"content": translated_content,
-                  "book_id": book_id, "chapter_num": chapter_num}
+            data={"content": translated_content, "book_id": book_id, "chapter_num": chapter_num}
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
