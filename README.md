@@ -24,7 +24,7 @@
 👨‍💻 **백엔드**
 
 - 허준혁 [@Juunsik] (https://github.com/Juunsik)
-- 이혜민 [@LeeJS9856] (https://github.com/hy2min)
+- 이혜민 [@hy2min] (https://github.com/hy2min)
 
 <br/>
 <br/>
