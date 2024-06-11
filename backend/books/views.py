@@ -28,21 +28,37 @@ class BookListAPIView(APIView):
         books = Book.objects.order_by("-created_at")
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data)
-
-    # 새 소설 책 생성
-    def post(self, request):
+    
+    # 시놉시스 생성
+    def post(self, request) :
         user_prompt = request.data.get("prompt")
         language = request.data.get("language", "EN-US")
+        
         if not user_prompt:
             return Response(
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
-
+        
+        # content 생성
         content = elements_generator(user_prompt)  # ai로 elements 생성
         translate_content = translate_summary(content, language)
         content["user_id"] = request.user.pk
-        serializer = BookSerializer(data=content)  # db에 title, user_id 저장
-        if serializer.is_valid(raise_exception=True):
+
+        #image 생성
+        client = OpenAI()
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=f"{content['title']}, {content['tone']}",
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
+        res = requests.get(response.data[0].url)
+        image_content = ContentFile(res.content, name=f'{content['title']}.png')
+        content['image'] = image_content
+
+        serializer = BookSerializer(data = content)
+        if serializer.is_valid(raise_exception=True) :
             serializer.save()
             return Response(
                 data={
@@ -51,33 +67,6 @@ class BookListAPIView(APIView):
                 },  # FE에 content 응답
                 status=status.HTTP_201_CREATED,
             )
-
-
-class DALL_EImageAPIView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def post(self, request, book_id):
-        client = OpenAI()
-        book = get_object_or_404(Book, id=book_id)
-        if book.user_id is not request.user:
-            return Response(
-                {"error": "You don't have permission."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=f"{book.title}, {book.tone}",
-            size="1024x1024",
-            quality="standard",
-            n=1,
-        )
-        res = requests.get(response.data[0].url)
-        book.image = ContentFile(res.content, name=f'{book.title}.png')
-        book.save()
-
-        serializer = BookSerializer(instance=book)
-        return Response(serializer.data, status=200)
-
 
 class BookDetailAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
