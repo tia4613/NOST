@@ -34,7 +34,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     "novel-stella.com",
-    "nost-stella.com"
+    "nost-stella.com",
 ]
 
 # 미디어 파일을 위한 스토리지 설정
@@ -125,12 +125,12 @@ DATABASES = {
 }
 
 # CORS
-CORS_ORIGIN_ORIGINS = [
+CORS_ORIGIN_WHITELIST = [
     "http://127.0.0.1:8000",
     "http://localhost:3000",
     "http://" + secret.AWS_IP,
     "https://novel-stella.com",
-    "https://nost-stella.com"
+    "https://nost-stella.com",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -257,19 +257,19 @@ USE_TZ = True
 
 
 # AWS Setting
-AWS_REGION = "ap-northeast-2" #AWS서버의 지역
-AWS_STORAGE_BUCKET_NAME = "mynostbucket" #생성한 버킷 이름
-AWS_ACCESS_KEY_ID = secret.MY_AWS_ACCESS_KEY_ID #액서스 키 ID
-AWS_SECRET_ACCESS_KEY = secret.MY_AWS_SECRET_ACCESS_KEY #액서스 키 PW
-#버킷이름.s3.AWS서버지역.amazonaws.com 형식
-AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME, AWS_REGION)
+AWS_REGION = "ap-northeast-2"  # AWS서버의 지역
+AWS_STORAGE_BUCKET_NAME = "mynostbucket"  # 생성한 버킷 이름
+AWS_ACCESS_KEY_ID = secret.MY_AWS_ACCESS_KEY_ID  # 액서스 키 ID
+AWS_SECRET_ACCESS_KEY = secret.MY_AWS_SECRET_ACCESS_KEY  # 액서스 키 PW
+# 버킷이름.s3.AWS서버지역.amazonaws.com 형식
+AWS_S3_CUSTOM_DOMAIN = "%s.s3.%s.amazonaws.com" % (AWS_STORAGE_BUCKET_NAME, AWS_REGION)
 # Static Setting
 STATIC_URL = "https://%s/static/" % AWS_S3_CUSTOM_DOMAIN
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 # Media Setting
 
 MEDIA_URL = "https://%s/meida/" % AWS_S3_CUSTOM_DOMAIN
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
