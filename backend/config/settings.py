@@ -33,7 +33,8 @@ ALLOWED_HOSTS = [
     secret.AWS_IP,
     "127.0.0.1",
     "localhost",
-    "novel-stella.com"
+    "novel-stella.com",
+    "nost-stella.com"
 ]
 
 # 미디어 파일을 위한 스토리지 설정
@@ -128,7 +129,8 @@ CORS_ORIGIN_WHITELIST = [
     "http://127.0.0.1:8000",
     "http://localhost:3000",
     "http://" + secret.AWS_IP,
-    "https://novel-stella.com"
+    "https://novel-stella.com",
+    "https://nost-stella.com"
 ]
 CORS_ALLOW_CREDENTIALS = True
 
