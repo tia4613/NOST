@@ -55,11 +55,10 @@ class BookListAPIView(APIView):
         )
         res = requests.get(response.data[0].url)
         image_content = ContentFile(res.content, name=f'{content['title']}.png')
-        content['image'] = image_content
 
         serializer = BookSerializer(data = content)
         if serializer.is_valid(raise_exception=True) :
-            serializer.save()
+            serializer.save(image = image_content)
             return Response(
                 data={
                     "book_id": serializer.data["id"],
