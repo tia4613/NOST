@@ -46,7 +46,7 @@ class BookListAPIView(APIView):
         content["user_id"] = request.user.pk
 
         # image 생성
-        client = OpenAI()
+        client = OpenAI(api_key=secret.OPENAI_API_KEY)
         response = client.images.generate(
             model="dall-e-3",
             prompt=f"{content['title']}, {content['tone']}, {content['setting']}",
