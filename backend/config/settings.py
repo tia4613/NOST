@@ -27,7 +27,7 @@ SECRET_KEY = secret.SECRET_KEY
 OPENAI_API_KEY = secret.OPENAI_API_KEY
 DEEPL_API_KEY = secret.DEEPL_API_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     secret.AWS_IP,
