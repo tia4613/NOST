@@ -47,9 +47,9 @@ class BookListAPIView(APIView):
         #image 생성
         client = OpenAI()
         response = client.images.generate(
-            model="dall-e-2",
-            prompt=f"{content['title']}, {content['tone']}",
-            size="512x512",
+            model="dall-e-3",
+            prompt=f"{content['title']}, {content['tone']},{content['setting']}",
+            size="1024x1024",
             quality="standard",
             n=1,
         )
