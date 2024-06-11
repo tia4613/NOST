@@ -29,23 +29,23 @@ class BookListAPIView(APIView):
         books = Book.objects.order_by("-created_at")
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data)
-    
+
     # 시놉시스 생성
-    def post(self, request) :
+    def post(self, request):
         user_prompt = request.data.get("prompt")
         language = request.data.get("language", "EN-US")
-        
+
         if not user_prompt:
             return Response(
                 {"error": "Missing prompt"}, status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # content 생성
         content = elements_generator(user_prompt)  # ai로 elements 생성
         translate_content = translate_summary(content, language)
         content["user_id"] = request.user.pk
 
-        #image 생성
+        # image 생성
         client = OpenAI()
         response = client.images.generate(
             model="dall-e-3",
@@ -55,11 +55,11 @@ class BookListAPIView(APIView):
             n=1,
         )
         res = requests.get(response.data[0].url)
-        image_content = ContentFile(res.content, name=f'{content['title']}.png')
+        image_content = ContentFile(res.content, name=f"{content['title']}.png")
 
-        serializer = BookSerializer(data = content)
-        if serializer.is_valid(raise_exception=True) :
-            serializer.save(image = image_content)
+        serializer = BookSerializer(data=content)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(image=image_content)
             return Response(
                 data={
                     "book_id": serializer.data["id"],
@@ -67,6 +67,7 @@ class BookListAPIView(APIView):
                 },  # FE에 content 응답
                 status=status.HTTP_201_CREATED,
             )
+
 
 class BookDetailAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -84,15 +85,16 @@ class BookDetailAPIView(APIView):
         response_data["chapters"] = chapter_serializer.data
         return Response(response_data, status=200)
 
-
     def post(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
         if book.user_id != request.user:
-            return Response({"error": "You don't have permission."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "You don't have permission."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
         language = request.data.get("language", "EN-US")
-        selected_recommendation = request.data.get(
-            "selected_recommendation", None)
+        selected_recommendation = request.data.get("selected_recommendation", None)
 
         chapter = Chapter.objects.filter(book_id=book_id).last()
         elements = ElementsSerializer(book).data
@@ -108,19 +110,29 @@ class BookDetailAPIView(APIView):
             else:
                 summary = request.data.get("summary")
                 if not summary:
-                    return Response({"error": "Missing summary prompt"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"error": "Missing summary prompt"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
             chapter_num = chapter.chapter_num + 1
-            prologue = Chapter.objects.filter(
-                book_id=book_id, chapter_num=0).first()
+            prologue = Chapter.objects.filter(book_id=book_id, chapter_num=0).first()
             result = summary_generator(
-                chapter_num, summary, elements, prologue.content if prologue else "", language
+                chapter_num,
+                summary,
+                elements,
+                prologue.content if prologue else "",
+                language,
             )
             content = result["final_summary"]
             translated_content = translate_summary(content, language)
 
         serializer = ChapterSerializer(
-            data={"content": translated_content, "book_id": book_id, "chapter_num": chapter_num}
+            data={
+                "content": translated_content,
+                "book_id": book_id,
+                "chapter_num": chapter_num,
+            }
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
@@ -128,7 +140,7 @@ class BookDetailAPIView(APIView):
                 "book_id": book_id,
                 "translated_content": translated_content,
                 "chapter_num": chapter_num,
-                "recommendations": result.get("recommendations", [])
+                "recommendations": result.get("recommendations", []),
             }
             return Response(data=response_data, status=status.HTTP_201_CREATED)
         else:
@@ -233,8 +245,7 @@ class RatingAPIView(APIView):
 
     def get(self, request, book_id):
         book = get_object_or_404(Book, id=book_id)
-        user_rating = Rating.objects.filter(
-            book=book, user_id=request.user.id).first()
+        user_rating = Rating.objects.filter(book=book, user_id=request.user.id).first()
         if user_rating:
             serializer = RatingSerializer(user_rating)
             return Response(serializer.data, status=200)
@@ -287,8 +298,7 @@ class CommentDetailAPIView(APIView):
                 {"error": "You don't have permission."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-        serializer = CommentSerializer(
-            comment, data=request.data, partial=True)
+        serializer = CommentSerializer(comment, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data)
