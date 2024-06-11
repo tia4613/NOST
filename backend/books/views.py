@@ -18,7 +18,7 @@ from django.core import serializers
 from django.core.files.base import ContentFile
 from .generators import elements_generator, prologue_generator, summary_generator
 from .deepL_translation import translate_summary
-from config import secret, settings
+from config import secret
 
 
 class BookListAPIView(APIView):
@@ -46,10 +46,10 @@ class BookListAPIView(APIView):
         content["user_id"] = request.user.pk
 
         # image 생성
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        client = OpenAI()
         response = client.images.generate(
             model="dall-e-3",
-            prompt=f"{content['title']}, {content['tone']},{content['setting']}",
+            prompt=f"{content['title']}, {content['tone']}, {content['setting']}",
             size="1024x1024",
             quality="standard",
             n=1,
