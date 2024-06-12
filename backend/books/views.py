@@ -74,7 +74,7 @@ class BookDetailAPIView(APIView):
         book = get_object_or_404(Book, id=book_id)
         ratings = Rating.objects.filter(book=book)
 
-        chapters = Chapter.objects.filter(book_id=book_id)
+        chapters = Chapter.objects.filter(book_id=book_id).order_by('chapter_num')
         chapter_serializer = ChapterSerializer(chapters, many=True)
 
         book_serializer = BookSerializer(book)
@@ -100,7 +100,8 @@ class BookDetailAPIView(APIView):
             chapter_num = 0
             result = prologue_generator(elements)
             content = result["prologue"]
-            translated_content = translate_summary(content, language)
+            content = translate_summary(content, language)
+
         else:
             if selected_recommendation:
                 summary = f"{selected_recommendation['Title']}: {selected_recommendation['Description']}"
@@ -116,16 +117,15 @@ class BookDetailAPIView(APIView):
                 chapter_num, summary, elements, prologue.content if prologue else "", language
             )
             content = result["final_summary"]
-            translated_content = translate_summary(content, language)
 
         serializer = ChapterSerializer(
-            data={"content": translated_content, "book_id": book_id, "chapter_num": chapter_num}
+            data={"content": content, "book_id": book_id, "chapter_num": chapter_num}
         )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             response_data = {
                 "book_id": book_id,
-                "translated_content": translated_content,
+                "translated_content": content,
                 "chapter_num": chapter_num,
                 "recommendations": result.get("recommendations", [])
             }
