@@ -30,7 +30,7 @@
 <br/>
 
 # 🏗️ 서비스 아키텍처
-![image](https://github.com/1489ehdghks/NOST/assets/159985538/2e302b58-b82c-4cd5-8aba-0421b72836e7)
+![image](https://github.com/1489ehdghks/NOST/assets/159985538/6155f958-9fb4-444a-8e89-75671c4bd7f8)
 
 # 🖥️개발 환경
 <details>
