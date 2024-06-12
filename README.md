@@ -88,7 +88,7 @@ DALL-E: 이미지 생성 AI
 
 # ✅주요 기능
 - **메인 페이지**
-- **로그인**  [상세보기](https://github.com/1489ehdghks/NOST.wiki.git)
+- **로그인**  [상세보기](https://github.com/1489ehdghks/NOST/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C(Login))
 - **회원가입**
 - **프로필 페이지**
 - **사이드바**
