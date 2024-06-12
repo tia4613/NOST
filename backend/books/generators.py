@@ -421,6 +421,7 @@ def summary_generator(chapter_num, summary, elements, prologue, language):
     memory.save_context({"input": prompt}, {"output": result.content})
 
     cleaned_story = remove_recommendation_paths(result.content)
+    cleaned_story = translate_summary(cleaned_story, language)
     recommendations = generate_recommendations(
         chat_history, result.content, next_stage, language
     )
