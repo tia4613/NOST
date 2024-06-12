@@ -32,14 +32,32 @@
 # 🏗️ 서비스 아키텍처
 ![image](https://github.com/1489ehdghks/NOST/assets/159985538/6155f958-9fb4-444a-8e89-75671c4bd7f8)
 
+
+# ⚙️사용 환경 설정
+  - [FRONTEND](https://github.com/1489ehdghks/NOST/wiki/%ED%99%98%EA%B2%BD-%EC%84%A4%EC%A0%95(Frontend))
+
+npm install 을 사용해서 node_modules를 설치 후
+<br/>
+npm start를 사용하여 실행
+
+
+  - [BACKEND](https://github.com/1489ehdghks/NOST/wiki/%ED%99%98%EA%B2%BD-%EC%84%A4%EC%A0%95(Backend))
+
+가상환경을 키고
+python manage.py runserver 사용하여 실행
+<br/>
+pip freeze > requirements.txt  package
+
+<br/>
+
 # 🖥️개발 환경
 <details>
 <summary>프론트엔드</summary>
 <div>
 
-React: 프론트엔드 프레임워크 <br/>
-Zustand: 상태 관리 라이브러리 <br/>
-Cloudflare: CDN 및 보안 서비스
+- React: 프론트엔드 프레임워크 <br/>
+- Zustand: 상태 관리 라이브러리 <br/>
+- Cloudflare: CDN 및 보안 서비스
 
 </div>
 </details>
@@ -48,10 +66,10 @@ Cloudflare: CDN 및 보안 서비스
 <summary>백엔드</summary>
 <div>
 
-Django: 백엔드 프레임워크 <br/>
-Gunicorn: WSGI HTTP 서버 <br/>
-PostgreSQL: 데이터베이스 관리 시스템 <br/>
-Nginx: HTTP 및 리버스 프록시 서버
+- Django: 백엔드 프레임워크 <br/>
+- Gunicorn: WSGI HTTP 서버 <br/>
+- PostgreSQL: 데이터베이스 관리 시스템 <br/>
+- Nginx: HTTP 및 리버스 프록시 서버
 
 </div>
 </details>
@@ -60,8 +78,9 @@ Nginx: HTTP 및 리버스 프록시 서버
 <summary>클라우드 인프라</summary>
 <div>
 
-Amazon EC2: 서버 호스팅 <br/>
-Amazon S3: 스토리지 서비스 <br/>
+- Amazon EC2: 서버 호스팅 <br/>
+- Amazon S3: 스토리지 서비스 <br/>
+- Amazon Route53: DNS 및 도메인 이름 관리 서비스 <br/>
 
 </div>
 </details>
@@ -70,18 +89,18 @@ Amazon S3: 스토리지 서비스 <br/>
 <summary>추가 서비스</summary>
 <div>
 
-GitHub: 소스 코드 관리 및 협업 도구 <br/>
-LangChain: 자연어 처리 라이브러리 <br/>
-DeepL: 번역 서비스 <br/>
-ChatGPT: 챗봇 서비스 <br/>
-DALL-E: 이미지 생성 AI 
+- GitHub: 소스 코드 관리 및 협업 도구 <br/>
+- LangChain: 자연어 처리 라이브러리 <br/>
+- DeepL: 번역 서비스 <br/>
+- ChatGPT: 챗봇 서비스 <br/>
+- DALL-E: 이미지 생성 AI 
 
 </div>
 </details>
 
 
 
-# 💻 ERD
+# 🛠️ ERD
 ![image](https://github.com/1489ehdghks/NOST/assets/159985538/1793ecf8-4415-4591-81f6-91d568752063)
 
 <br/>
@@ -95,21 +114,7 @@ DALL-E: 이미지 생성 AI
 
 <br/>
 
-# FRONTEND
 
-npm install 을 사용해서 node_modules를 설치 후
-<br/>
-npm start를 사용하여 실행
-
-
-# BACKEND
-
-가상환경을 키고
-python manage.py runserver 사용하여 실행
-<br/>
-pip freeze > requirements.txt  package
-
-<br/>
 
 # 🌟 git commit 규칙
 - feat : 새로운 기능에 대한 커밋
