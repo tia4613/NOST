@@ -82,7 +82,7 @@ DALL-E: 이미지 생성 AI
 
 
 # 💻 ERD
-![image](https://github.com/1489ehdghks/NOST/assets/159985538/145a1f7a-b26c-4959-b996-07ccf525498f)
+![image](https://github.com/1489ehdghks/NOST/assets/159985538/1793ecf8-4415-4591-81f6-91d568752063)
 
 <br/>
 
