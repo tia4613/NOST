@@ -110,10 +110,10 @@
 <br/>
 
 # ✅주요 기능
-- **홈 페이지**  [상세보기](https://github.com/1489ehdghks/NOST/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C(Login))
-- **책 목록**  [상세보기](https://github.com/1489ehdghks/NOST/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C(Book))
-- **프로필 페이지**  [상세보기](https://github.com/1489ehdghks/NOST/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C(Profile))
-- **소설 생성**  [상세보기](https://github.com/1489ehdghks/NOST/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C-(-%EC%86%8C%EC%84%A4-%EC%83%9D%EC%84%B1-%ED%8E%98%EC%9D%B4%EC%A7%80))
+- **홈 페이지**  [📎Wiki - 상세보기](https://github.com/1489ehdghks/NOST/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C(Login))
+- **책 목록**  [📎Wiki - 상세보기](https://github.com/1489ehdghks/NOST/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C(Book))
+- **프로필 페이지**  [📎Wiki - 상세보기](https://github.com/1489ehdghks/NOST/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C(Profile))
+- **소설 생성**  [📎Wiki - 상세보기](https://github.com/1489ehdghks/NOST/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C-(New-Novel))
 - **사이드바**
 
 <br/>
