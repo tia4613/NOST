@@ -10,7 +10,7 @@
 
 <br/>
 
-# 팀 멤버 구성 🧑‍💻
+# 🧑‍💻팀 멤버 구성 
 
 <br/>
 
@@ -36,17 +36,21 @@
 # ⚙️사용 환경 설정
   - [FRONTEND](https://github.com/1489ehdghks/NOST/wiki/%ED%99%98%EA%B2%BD-%EC%84%A4%EC%A0%95(Frontend))
 
-npm install 을 사용해서 node_modules를 설치 후
-<br/>
-npm start를 사용하여 실행
+1. 가상환경 실행
+2. node_modeules 설치
+   `npm install`
+3. `npm start` 서버 실행
+
 
 
   - [BACKEND](https://github.com/1489ehdghks/NOST/wiki/%ED%99%98%EA%B2%BD-%EC%84%A4%EC%A0%95(Backend))
 
-가상환경을 키고
-python manage.py runserver 사용하여 실행
-<br/>
-pip freeze > requirements.txt  package
+1. 가상환경 실행
+2. pip 설치
+   1. 패키지를 처음 설치하는 경우 `pip install -r requirements.txt`
+   2. 패키지가 설치되어 있는 경우 `pip install --force-reinstall -r requirements.txt`
+3. `python manage.py runserver` 서버 실행
+
 
 <br/>
 
@@ -116,7 +120,11 @@ pip freeze > requirements.txt  package
 
 
 
-# 🌟 git commit 규칙
+
+<details>
+<summary><h2>🌟 git commit 규칙</h2></summary>
+<div markdown="1">
+
 - feat : 새로운 기능에 대한 커밋
 - fix : 버그 수정에 대한
 - build : build 관련 파일 수정에 대한 커밋
@@ -132,3 +140,5 @@ pip freeze > requirements.txt  package
 - setting: 초기 세팅 작업을 수행하는 경우
 - assets: assets(image, font...) 관련 작업을 수행하는 경우
 
+</div>
+</details>
