@@ -49,7 +49,8 @@
 2. pip 설치
    1. 패키지를 처음 설치하는 경우 `pip install -r requirements.txt`
    2. 패키지가 설치되어 있는 경우 `pip install --force-reinstall -r requirements.txt`
-3. `python manage.py runserver` 서버 실행
+3. .env 세팅
+4. `python manage.py runserver` 서버 실행
 
 
 <br/>
