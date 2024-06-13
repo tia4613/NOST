@@ -258,7 +258,7 @@ USE_TZ = True
 
 # AWS Setting
 AWS_REGION = "ap-northeast-2"  # AWS서버의 지역
-AWS_STORAGE_BUCKET_NAME = "mynostbucket"  # 생성한 버킷 이름
+AWS_STORAGE_BUCKET_NAME = secret.MY_AWS_STORAGE_BUCKET_NAME  # 생성한 버킷 이름
 AWS_ACCESS_KEY_ID = secret.MY_AWS_ACCESS_KEY_ID  # 액서스 키 ID
 AWS_SECRET_ACCESS_KEY = secret.MY_AWS_SECRET_ACCESS_KEY  # 액서스 키 PW
 # 버킷이름.s3.AWS서버지역.amazonaws.com 형식
