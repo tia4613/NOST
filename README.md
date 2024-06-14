@@ -50,7 +50,9 @@
    1. 패키지를 처음 설치하는 경우 `pip install -r requirements.txt`
    2. 패키지가 설치되어 있는 경우 `pip install --force-reinstall -r requirements.txt`
 3. .env 세팅
-4. `python manage.py runserver` 서버 실행
+4. `python manage.py makemigrations` 실행
+5. `python manage.py migrate` 실행
+6. `python manage.py runserver` 서버 실행
 
 
 <br/>
